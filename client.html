@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Perception - Live Client</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --primary-accent: #6366f1;
+            --primary-hover: #4f46e5;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #a5b4fc, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--danger-color);
+            box-shadow: 0 0 8px var(--danger-color);
+            transition: all 0.3s ease;
+        }
+
+        .dot.connected {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
+        .messages-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .msg-item {
+            padding: 10px 14px;
+            border-radius: 10px;
+            max-width: 80%;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .msg-item.server {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .msg-item.user {
+            align-self: flex-end;
+            background: var(--primary-accent);
+            color: white;
+        }
+
+        .msg-item.system {
+            align-self: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: transparent;
+        }
+
+        .controls {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-accent);
+        }
+
+        button {
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary-accent);
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        button.btn-connect {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        button.btn-connect:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Shared Perception WebSocket</h1>
+        <div class="status-badge">
+            <span id="dot" class="dot"></span>
+            <span id="status-text">Disconnected</span>
+        </div>
+    </div>
+
+    <div id="messages" class="messages-box">
+        <div class="msg-item system">Click "Connect" to establish WebSocket connection</div>
+    </div>
+
+    <div class="controls">
+        <button id="connBtn" class="btn-connect" onclick="toggleConnect()">Connect</button>
+        <input type="text" id="msgInput" placeholder="Type a message..." disabled onkeypress="handleKeyPress(event)">
+        <button id="sendBtn" onclick="sendMsg()" disabled>Send</button>
+    </div>
+</div>
+<script>
+    let ws = null;
+    const defaultTelemetry = {
+        "glass_id": "glass_B",
+        "position": { "x": 12, "y": 8 },
+        "heading": 270,
+        "detections": []
+    };
+
+    function toggleConnect() {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.close();
+        } else {
+            connect();
+        }
+    }
+
+    function connect() {
+        ws = new WebSocket("ws://127.0.0.1:8000/ws");
+
+        ws.onopen = () => {
+            document.getElementById("dot").classList.add("connected");
+            document.getElementById("status-text").innerText = "Connected";
+            document.getElementById("connBtn").innerText = "Disconnect";
+            document.getElementById("msgInput").disabled = false;
+            document.getElementById("sendBtn").disabled = false;
+            document.getElementById("msgInput").value = JSON.stringify(defaultTelemetry, null, 2);
+            appendMessage("Connected to Shared Perception Server", "system");
+        };
+
+        ws.onmessage = (event) => {
+            appendMessage(event.data, "server");
+        };
+
+        ws.onclose = () => {
+            document.getElementById("dot").classList.remove("connected");
+            document.getElementById("status-text").innerText = "Disconnected";
+            document.getElementById("connBtn").innerText = "Connect";
+            document.getElementById("msgInput").disabled = true;
+            document.getElementById("sendBtn").disabled = true;
+            appendMessage("Disconnected from server", "system");
+        };
+
+        ws.onerror = (err) => {
+            console.error("WebSocket Error: ", err);
+        };
+    }
+
+    function sendMsg() {
+        const input = document.getElementById("msgInput");
+        const val = input.value.trim();
+        if (val && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(val);
+            appendMessage("Sent telemetry: " + val, "user");
+        }
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === "Enter" && e.ctrlKey) {
+            sendMsg();
+        }
+    }
+
+    function appendMessage(text, type) {
+        const box = document.getElementById("messages");
+        const el = document.createElement("div");
+        el.className = `msg-item ${type}`;
+        el.innerText = text;
+        box.appendChild(el);
+        box.scrollTop = box.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
