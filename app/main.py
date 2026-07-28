@@ -5,6 +5,8 @@ FastAPI + WebSockets + YOLOv8 + OpenCV Computer Vision.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.websocket import router as ws_router
+from app.api.routes import router as api_router
+from app.dashboard.visualizer import router as dashboard_router
 
 app = FastAPI(
     title="Shared Perception Safety System",
@@ -21,8 +23,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount WebSocket Router
+# Mount Routers
 app.include_router(ws_router)
+app.include_router(api_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/")

@@ -158,5 +158,40 @@ class PerceptionFusionEngine:
         return fused_landmarks
 
 
+    def associate_detected_person_with_glass(
+        self,
+        person_x: float,
+        person_y: float,
+        person_z: float,
+        active_glasses: Dict,
+        max_matching_distance: float = 1.5
+    ) -> str | None:
+        """
+        3D Spatial Identity Association Algorithm.
+        Matches a detected 'person' 3D bounding box against active connected smart glasses poses.
+        If 3D Euclidean distance <= 1.5m, returns the matched target glass_id.
+        """
+        best_glass_id = None
+        min_dist = float("inf")
+
+        for glass_id, glass in active_glasses.items():
+            g_x = glass.pose.x if hasattr(glass, "pose") and glass.pose else getattr(glass.position, "x", 0.0)
+            g_y = glass.pose.y if hasattr(glass, "pose") and glass.pose else getattr(glass.position, "y", 0.0)
+            g_z = glass.pose.z if hasattr(glass, "pose") and glass.pose else getattr(glass.position, "z", 0.0)
+
+            dist = euclidean_distance_3d((person_x, person_y, person_z), (g_x, g_y, g_z))
+            if dist <= max_matching_distance and dist < min_dist:
+                min_dist = dist
+                best_glass_id = glass_id
+
+        if best_glass_id:
+            logger.info(
+                f"🎯 3D Spatial Match: Detected person at ({person_x:.1f}m, {person_y:.1f}m) "
+                f"matched to active glass unit '{best_glass_id}' (Dist: {min_dist:.2f}m)"
+            )
+
+        return best_glass_id
+
+
 fusion_engine = PerceptionFusionEngine()
 
