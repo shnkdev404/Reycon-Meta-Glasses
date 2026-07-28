@@ -1,125 +1,131 @@
-"""
-Phase 1: High-throughput WebSocket API Endpoint.
-
-Validates incoming smart glass spatial telemetry, coordinates spatial fusion & threat engines,
-and delivers direct acknowledgments and non-broadcast targeted alerts.
-"""
+import base64
 import json
-from typing import Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
-from pydantic import ValidationError
-from app.models.glass import GlassState, GlassPose
-from app.models.object import Detection2D
+import logging
+import time
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+import cv2
+import numpy as np
+
+from app.models import GlassState, Position, GPSLocation
 from app.services.connection_manager import connection_manager
 from app.services.world_manager import world_manager
-from app.utils.logger import get_logger
+from app.services.detector import detector
 
-logger = get_logger("WebSocketAPI")
+logger = logging.getLogger("WebSocketAPI")
 router = APIRouter()
 
 
-@router.websocket("/ws")
-async def websocket_endpoint(
-    websocket: WebSocket,
-    glass_id: Optional[str] = Query(default=None),
-    auth_token: Optional[str] = Query(default=None)
-):
+def decode_base64_frame(b64_string: str) -> np.ndarray:
+    """Decode a Base64-encoded JPEG image string to an OpenCV BGR image array."""
+    if "," in b64_string:
+        b64_string = b64_string.split(",", 1)[1]
+    image_bytes = base64.b64decode(b64_string)
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    return frame
+
+
+@router.websocket("/ws/mobile")
+@router.websocket("/ws")  # Alias for backward compatibility
+async def websocket_mobile_endpoint(websocket: WebSocket):
     """
-    WebSocket endpoint for Ray-Ban Meta Smart Glasses.
-    URL Format: ws://127.0.0.1:8000/ws?glass_id=glass_A
+    WebSocket endpoint for mobile clients & smart glasses streaming camera feeds, GPS, and compass telemetry.
+    Expects JSON: { "glass_id": str, "heading": float, "frame": str (Base64 JPEG), "gps": { latitude, longitude, altitude, accuracy } }
     """
-    client_glass_id: str = glass_id or "unknown_glass"
-    is_connected = False
+    glass_id = "unknown_device"
+    await websocket.accept()
 
     try:
-        # Step 1: Pre-parse glass_id if provided in query or wait for first packet
-        raw_text = await websocket.receive_text()
-        first_payload = json.loads(raw_text)
-        
-        if "glass_id" in first_payload:
-            client_glass_id = first_payload["glass_id"]
-
-        # Step 2: Accept connection & register session
-        is_connected = await connection_manager.connect(
-            glass_id=client_glass_id,
-            websocket=websocket,
-            auth_token=auth_token
-        )
-
-        if not is_connected:
-            return
-
-        # Step 3: Process initial payload
-        await _process_telemetry_packet(client_glass_id, first_payload, websocket)
-
-        # Step 4: Stream processing loop
         while True:
-            raw_text = await websocket.receive_text()
-            connection_manager.update_heartbeat(client_glass_id)
-            
-            payload = json.loads(raw_text)
-            if "glass_id" in payload:
-                client_glass_id = payload["glass_id"]
-                
-            await _process_telemetry_packet(client_glass_id, payload, websocket)
+            raw_data = await websocket.receive_text()
+            try:
+                data = json.loads(raw_data)
+            except json.JSONDecodeError:
+                await websocket.send_json({"status": "error", "message": "Invalid JSON format"})
+                continue
 
-    except WebSocketDisconnect:
-        logger.info(f"📌 Client '{client_glass_id}' disconnected gracefully.")
-        connection_manager.disconnect(client_glass_id)
-        await world_manager.remove_glass(client_glass_id)
+            glass_id = data.get("glass_id", glass_id)
+            heading = float(data.get("heading", 0.0))
+            frame_b64 = data.get("frame")
 
-    except json.JSONDecodeError:
-        logger.error(f"⚠️ JSONDecodeError from '{client_glass_id}'.")
-        if is_connected:
-            await websocket.send_json({"status": "error", "message": "Malformed JSON payload"})
+            # Register connection with manager if not already present
+            if glass_id not in connection_manager.active_connections:
+                connection_manager.active_connections[glass_id] = websocket
+                logger.info(f"Registered connection for '{glass_id}'.")
 
-    except Exception as e:
-        logger.error(f"⚠️ WebSocket error from '{client_glass_id}': {e}")
-        connection_manager.disconnect(client_glass_id)
-        await world_manager.remove_glass(client_glass_id)
+            detections = []
+            if frame_b64:
+                try:
+                    frame = decode_base64_frame(frame_b64)
+                    if frame is not None:
+                        detections = detector.detect_frame(frame)
+                except Exception as e:
+                    logger.error(f"Error decoding frame from '{glass_id}': {e}")
 
+            # Parse optional GPS location coordinates
+            gps_location = None
+            gps_raw = data.get("gps")
+            if gps_raw and isinstance(gps_raw, dict) and "latitude" in gps_raw and "longitude" in gps_raw:
+                try:
+                    gps_location = GPSLocation(
+                        latitude=float(gps_raw["latitude"]),
+                        longitude=float(gps_raw["longitude"]),
+                        altitude=float(gps_raw.get("altitude", 0.0) or 0.0),
+                        accuracy=float(gps_raw.get("accuracy", 0.0) or 0.0)
+                    )
+                except Exception as ve:
+                    logger.warning(f"Invalid GPS data payload from '{glass_id}': {ve}")
 
-async def _process_telemetry_packet(glass_id: str, payload: dict, websocket: WebSocket):
-    """
-    Validate telemetry schema, update World Model, and return direct acknowledgment.
-    Supports both nested Pydantic structure and legacy flat telemetry packets.
-    """
-    try:
-        # Normalize incoming JSON to GlassState & Detection2D models
-        if "pose" in payload:
-            glass_state = GlassState.model_validate(payload)
-        else:
-            # Construct GlassState from flat schema (position: {x, y}, heading)
-            pos_dict = payload.get("position", {})
-            glass_state = GlassState(
-                glass_id=glass_id,
-                pose=GlassPose(
-                    x=float(pos_dict.get("x", 0.0)),
-                    y=float(pos_dict.get("y", 0.0)),
-                    z=float(pos_dict.get("z", 0.0)),
-                    heading=float(payload.get("heading", 0.0))
-                )
+            pos_dict = data.get("position", {})
+            position = Position(
+                x=float(pos_dict.get("x", 0.0)),
+                y=float(pos_dict.get("y", 0.0)),
+                z=float(pos_dict.get("z", 0.0))
             )
 
-        # Parse detections
-        raw_detections = payload.get("detections", [])
-        detections = [Detection2D.model_validate(d) for d in raw_detections]
+            glass_state = GlassState(
+                glass_id=glass_id,
+                position=position,
+                gps=gps_location,
+                heading=heading,
+                detections=detections,
+                timestamp=time.time()
+            )
 
-        # Synchronize with central World Model & evaluate threat engine
-        active_threats = await world_manager.update_glass_telemetry(glass_state, detections)
+            # Update world state and calculate spatial radar blips and threats
+            spatial_update = world_manager.update_glass(glass_state)
 
-        # Send direct status response back to sending glass
-        await websocket.send_json({
-            "status": "ok",
-            "glass_id": glass_id,
-            "active_threats_count": len(active_threats),
-            "message": "World model synchronized"
-        })
+            # Build response packet for transmitting client
+            response_payload = {
+                "status": "ok",
+                "glass_id": glass_id,
+                "heading": heading,
+                "gps": gps_location.model_dump() if gps_location else None,
+                "detections": [d.model_dump() for d in detections],
+                "active_threats": spatial_update["threats"],
+                "radar_blips": spatial_update["radar_blips"],
+                "all_devices_gps": spatial_update["all_devices_gps"],
+                "timestamp": time.time()
+            }
 
-    except ValidationError as ve:
-        logger.warning(f"⚠️ Validation error for glass '{glass_id}': {ve.errors()}")
-        await websocket.send_json({
-            "status": "error",
-            "error_type": "ValidationError",
-            "details": ve.errors()
-        })
+            # Send immediate feedback to transmitting client
+            await websocket.send_json(response_payload)
+
+            # Broadcast updated World State & Radar Blips to all connected devices
+            if spatial_update["threats"] or len(connection_manager.active_connections) > 1:
+                await connection_manager.broadcast({
+                    "event": "WORLD_STATE_UPDATE",
+                    "threats": spatial_update["threats"],
+                    "radar_blips": spatial_update["radar_blips"],
+                    "all_devices_gps": spatial_update["all_devices_gps"],
+                    "timestamp": time.time()
+                })
+
+    except WebSocketDisconnect:
+        logger.info(f"Client '{glass_id}' disconnected.")
+        connection_manager.disconnect(glass_id)
+        world_manager.remove_glass(glass_id)
+    except Exception as e:
+        logger.error(f"Unexpected error in WebSocket loop for '{glass_id}': {e}")
+        connection_manager.disconnect(glass_id)
+        world_manager.remove_glass(glass_id)

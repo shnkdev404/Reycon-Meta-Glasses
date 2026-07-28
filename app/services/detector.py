@@ -1,97 +1,79 @@
-"""
-Detection Engine Service Wrapper.
-Provides YOLOv8 inference, webcam stream detection, bounding box parsing, and direction calculation.
-"""
-from ultralytics import YOLO
+import logging
+from typing import List
 import cv2
 import numpy as np
-from typing import List, Any, Optional
-from app.models.glass import GlassState, Position
-from app.models.object import Detection2D, BoundingBox2D
+from ultralytics import YOLO
+from app.models import Detection, Position
 
-# Alias models for flexible imports
-class Detection:
-    def __init__(self, class_name: str, confidence: float, position: Position, direction: str):
-        self.class_name = class_name
-        self.confidence = confidence
-        self.position = position
-        self.direction = direction
-
-    def to_dict(self):
-        return {
-            "class_name": self.class_name,
-            "confidence": self.confidence,
-            "position": {"x": self.position.x, "y": self.position.y, "z": self.position.z},
-            "direction": self.direction
-        }
+logger = logging.getLogger("DetectionEngine")
 
 
 class DetectionEngine:
-    """
-    YOLOv8 Detection Engine supporting live camera frames, image arrays, and fallback simulation.
-    """
+    """YOLOv8 Object Detection Engine for processing video frames and parsing spatial directions & bounding boxes."""
 
-    def __init__(self, model_name: str = 'yolov8n.pt'):
-        self.model_name = model_name
-        self._model = None
-        self._initialize_model()
+    def __init__(self, model_name: str = "yolov8n.pt"):
+        logger.info(f"Initializing YOLO model '{model_name}'...")
+        self.model = YOLO(model_name)
+        logger.info("YOLO model loaded successfully.")
 
-    def _initialize_model(self):
-        """Load YOLO model weights if available."""
-        try:
-            self._model = YOLO(self.model_name)
-        except Exception:
-            self._model = None
-
-    def detect_frame(self, frame: Any) -> List[Detection]:
-        """Run YOLOv8 on frame and return structured detections."""
-        detections = []
-        if self._model is not None:
-            try:
-                results = self._model(frame)
-                frame_width = frame.shape[1] if hasattr(frame, 'shape') and len(frame.shape) > 1 else 1920
-                for detection in results[0].boxes.data:
-                    x1, y1, x2, y2, conf, class_id = detection
-                    if conf > 0.5:
-                        center_x = int((x1 + x2) / 2)
-                        center_y = int((y1 + y2) / 2)
-                        
-                        det = Detection(
-                            class_name=self._model.names[int(class_id)],
-                            confidence=float(conf),
-                            position=Position(x=float(center_x), y=float(center_y), z=0.0),
-                            direction=self.get_direction(center_x, frame_width)
-                        )
-                        detections.append(det)
-                if detections:
-                    return detections
-            except Exception:
-                pass
-
-        # Fallback simulation detection if camera/weights are unavailable
-        return [
-            Detection(
-                class_name="vehicle",
-                confidence=0.92,
-                position=Position(x=100.0, y=200.0, z=0.0),
-                direction="FRONT"
-            ),
-            Detection(
-                class_name="person",
-                confidence=0.88,
-                position=Position(x=500.0, y=300.0, z=0.0),
-                direction="RIGHT"
-            )
-        ]
-
-    def get_direction(self, x_center: float, frame_width: float = 1920.0) -> str:
-        """Determine relative horizontal direction (LEFT, FRONT, RIGHT)."""
+    def get_direction(self, x_center: float, frame_width: float) -> str:
+        """Calculate relative horizontal direction zone (LEFT, FRONT, RIGHT)."""
         third = frame_width / 3.0
         if x_center < third:
             return "LEFT"
         elif x_center > 2.0 * third:
             return "RIGHT"
         return "FRONT"
+
+    def detect_frame(self, frame: np.ndarray) -> List[Detection]:
+        """
+        Run YOLOv8 object detection on an OpenCV frame (BGR NumPy array).
+        Returns a list of Detection Pydantic models with calculated directions and bounding box reticle coordinates.
+        """
+        detections: List[Detection] = []
+        if frame is None or not isinstance(frame, np.ndarray) or frame.size == 0:
+            return detections
+
+        frame_height, frame_width = frame.shape[:2]
+
+        # Run inference in quiet mode
+        results = self.model(frame, verbose=False)
+
+        if not results or len(results) == 0:
+            return detections
+
+        boxes = results[0].boxes
+        if boxes is None:
+            return detections
+
+        for box in boxes:
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            confidence = float(box.conf[0].item())
+            class_id = int(box.cls[0].item())
+            class_name = self.model.names.get(class_id, f"class_{class_id}")
+
+            # Filter low confidence detections (< 35%)
+            if confidence < 0.35:
+                continue
+
+            center_x = (x1 + x2) / 2.0
+            center_y = (y1 + y2) / 2.0
+            direction = self.get_direction(center_x, frame_width)
+
+            detection = Detection(
+                class_name=class_name,
+                confidence=round(confidence, 4),
+                position=Position(
+                    x=round(center_x, 2),
+                    y=round(center_y, 2),
+                    z=0.0
+                ),
+                direction=direction,
+                bbox=[round(x1, 1), round(y1, 1), round(x2, 1), round(y2, 1)]
+            )
+            detections.append(detection)
+
+        return detections
 
 
 detector = DetectionEngine()

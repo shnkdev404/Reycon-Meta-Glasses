@@ -1,20 +1,18 @@
 """
-Shared Perception Platform - Main Application Entrypoint.
-Collaborative spatial perception & threat prediction backend for Ray-Ban Meta Smart Glasses.
+Shared Perception Safety System - Central Laptop Server.
+FastAPI + WebSockets + YOLOv8 + OpenCV Computer Vision.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import health_router, ws_router, routes_router
-from app.dashboard import dashboard_router
-from app.utils.config import settings
+from app.api.websocket import router as ws_router
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    description="Collaborative Spatial Perception & Threat Prediction Stack for Ray-Ban Meta Smart Glasses",
-    version=settings.VERSION
+    title="Shared Perception Safety System",
+    description="Laptop-Centric Collaborative Perception & Threat Warning System for Construction Sites",
+    version="1.0.0"
 )
 
-# Enable CORS for web visualizers & external client apps
+# Enable CORS for web visualizers & external mobile web apps
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,8 +21,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount REST, WebSocket, and Dashboard Routers
-app.include_router(routes_router)
-app.include_router(health_router)
+# Mount WebSocket Router
 app.include_router(ws_router)
-app.include_router(dashboard_router)
+
+
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "system": "Shared Perception Safety System",
+        "websocket_endpoint": "/ws/mobile"
+    }
+
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}

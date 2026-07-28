@@ -1,71 +1,54 @@
-"""
-Phase 1: Networking Layer & Connection Manager.
-
-Handles multiple simultaneous Meta Smart Glass WebSocket connections,
-reconnection handling, heartbeats, and non-broadcast direct messaging.
-"""
-import asyncio
-import time
-from typing import Dict, Optional
+import logging
+from typing import Dict
 from fastapi import WebSocket
-from app.utils.logger import get_logger
-from app.utils.config import settings
 
-logger = get_logger("ConnectionManager")
+logger = logging.getLogger("ConnectionManager")
+logging.basicConfig(level=logging.INFO)
 
 
 class ConnectionManager:
-    """Manages active smart glass WebSocket clients with auth and direct messaging."""
+    """Manages active WebSocket connections from client smartphones/glasses."""
 
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
-        self.last_heartbeat: Dict[str, float] = {}
 
-    async def connect(self, glass_id: str, websocket: WebSocket, auth_token: Optional[str] = None) -> bool:
-        """
-        Authenticate and accept a new smart glass connection.
-        Placeholder auth check included for hackathon extension.
-        """
-        # Authentication Placeholder Check
-        if auth_token and auth_token != settings.AUTH_SECRET_KEY:
-            logger.warning(f"🔒 Auth failed for glass '{glass_id}'. Rejecting connection.")
-            await websocket.close(code=4001, reason="Unauthorized connection request")
-            return False
-
+    async def connect(self, glass_id: str, websocket: WebSocket):
+        """Accept incoming WebSocket connection and register client."""
         await websocket.accept()
         self.active_connections[glass_id] = websocket
-        self.last_heartbeat[glass_id] = time.time()
-        logger.info(f"✅ Glass '{glass_id}' connected. ({len(self.active_connections)} active glasses)")
-        return True
+        logger.info(f"Client connected: '{glass_id}'. Total active connections: {len(self.active_connections)}")
 
     def disconnect(self, glass_id: str):
-        """Clean up connection on disconnect."""
+        """Remove client from active connections list on disconnect."""
         if glass_id in self.active_connections:
             del self.active_connections[glass_id]
-        if glass_id in self.last_heartbeat:
-            del self.last_heartbeat[glass_id]
-        logger.info(f"❌ Glass '{glass_id}' disconnected. ({len(self.active_connections)} remaining)")
+            logger.info(f"Client disconnected: '{glass_id}'. Remaining connections: {len(self.active_connections)}")
 
-    def update_heartbeat(self, glass_id: str):
-        """Update last active ping timestamp."""
-        self.last_heartbeat[glass_id] = time.time()
+    async def broadcast(self, message: dict):
+        """Broadcast JSON message to all currently connected clients."""
+        disconnected_clients = []
+        for glass_id, connection in self.active_connections.items():
+            try:
+                await connection.send_json(message)
+            except Exception as e:
+                logger.error(f"Error broadcasting to client '{glass_id}': {e}")
+                disconnected_clients.append(glass_id)
 
-    async def send_direct_message(self, glass_id: str, message: dict) -> bool:
-        """
-        Deliver message EXCLUSIVELY to a single specified smart glass (Non-broadcast).
-        """
-        websocket = self.active_connections.get(glass_id)
-        if not websocket:
-            logger.warning(f"⚠️ Failed to send direct message: Glass '{glass_id}' not connected.")
-            return False
-
-        try:
-            await websocket.send_json(message)
-            return True
-        except Exception as e:
-            logger.error(f"⚠️ Error sending direct message to '{glass_id}': {e}")
+        # Cleanup failed connections
+        for glass_id in disconnected_clients:
             self.disconnect(glass_id)
-            return False
+
+    async def send_personal_message(self, message: dict, glass_id: str) -> bool:
+        """Send JSON message directly to a specific connected client."""
+        connection = self.active_connections.get(glass_id)
+        if connection:
+            try:
+                await connection.send_json(message)
+                return True
+            except Exception as e:
+                logger.error(f"Error sending personal message to '{glass_id}': {e}")
+                self.disconnect(glass_id)
+        return False
 
 
 connection_manager = ConnectionManager()
