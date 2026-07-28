@@ -1,6 +1,7 @@
 import time
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from app.models.glass import GlassState
 
 
 class Position(BaseModel):
@@ -27,11 +28,4 @@ class Detection(BaseModel):
     bbox: List[float] = Field(default_factory=list, description="Bounding box pixel coordinates [x1, y1, x2, y2]")
 
 
-class GlassState(BaseModel):
-    """Current state of a connected device (smartphone or smart glass)."""
-    glass_id: str = Field(..., description="Unique hardware identifier for client device")
-    position: Position = Field(default_factory=Position, description="Current relative position")
-    gps: Optional[GPSLocation] = Field(default=None, description="Exact GPS geographic telemetry")
-    heading: float = Field(default=0.0, description="Compass orientation heading in degrees (0 to 360)")
-    detections: List[Detection] = Field(default_factory=list, description="Active detections from current frame")
-    timestamp: float = Field(default_factory=time.time, description="Timestamp of state update in epoch seconds")
+__all__ = ["Position", "GPSLocation", "Detection", "GlassState"]

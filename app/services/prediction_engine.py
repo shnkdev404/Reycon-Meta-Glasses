@@ -40,8 +40,8 @@ class ThreatPredictionEngine:
             label = obj.label.lower()
             clean_label = label.split(" #")[0].strip()
             
-            # Target hazardous dynamic objects and obstacles
-            if not any(k in clean_label for k in ["vehicle", "car", "forklift", "truck", "machine", "person", "obstacle", "hazard"]):
+            # Target hazardous dynamic objects, machinery, and obstacles
+            if not any(k in clean_label for k in ["vehicle", "car", "forklift", "truck", "excavator", "machine", "person", "obstacle", "hazard"]):
                 continue
 
             for glass_id, glass in glasses.items():
@@ -153,6 +153,65 @@ class ThreatPredictionEngine:
             return "Behind (Blind Spot)"
         else:
             return "Left"
+
+
+    def predict_trajectory(
+        self,
+        obj: WorldObject,
+        time_horizon_sec: float = 5.0,
+        step_sec: float = 0.5
+    ) -> List[Dict[str, float]]:
+        """
+        Extrapolate 3D trajectory path for an object into the future across a time horizon.
+        P_future(t) = P_current + V * t
+        """
+        trajectory_points = []
+        t = 0.0
+        while t <= time_horizon_sec:
+            px = obj.position_x + obj.velocity_x * t
+            py = obj.position_y + obj.velocity_y * t
+            pz = obj.position_z + obj.velocity_z * t
+            trajectory_points.append({
+                "time_offset_sec": round(t, 2),
+                "x": round(px, 2),
+                "y": round(py, 2),
+                "z": round(pz, 2)
+            })
+            t += step_sec
+        return trajectory_points
+
+    def estimate_collision_probability(
+        self,
+        obj: WorldObject,
+        glass: GlassState,
+        miss_threshold_meters: float = 2.5
+    ) -> Tuple[float, Optional[float]]:
+        """
+        Predict future trajectories of object and worker to estimate collision probability (0.0 to 1.0)
+        and Time-To-Collision (TTC in seconds).
+        """
+        trajectory = self.predict_trajectory(obj, time_horizon_sec=6.0, step_sec=0.2)
+        min_dist = float("inf")
+        best_ttc = None
+
+        for pt in trajectory:
+            t = pt["time_offset_sec"]
+            # Predict worker position assuming worker velocity or stationary
+            g_px = glass.pose.x + glass.velocity_x * t
+            g_py = glass.pose.y + glass.velocity_y * t
+
+            dist = euclidean_distance_2d((g_px, g_py), (pt["x"], pt["y"]))
+            if dist < min_dist:
+                min_dist = dist
+                best_ttc = t
+
+        # Compute collision probability inversely proportional to miss distance
+        if min_dist <= miss_threshold_meters:
+            prob = max(0.0, min(1.0, 1.0 - (min_dist / miss_threshold_meters)))
+        else:
+            prob = 0.0
+
+        return round(prob, 2), best_ttc
 
 
 prediction_engine = ThreatPredictionEngine()

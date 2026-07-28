@@ -119,5 +119,44 @@ class PerceptionFusionEngine:
         return label_str.split(" #")[0].strip().lower()
 
 
+    def fuse_local_maps(
+        self,
+        local_map_dict: Dict,
+        global_map_points: Dict[str, Dict]
+    ) -> Dict[str, Dict]:
+        """
+        Merge individual local SLAM maps into a unified Global Shared Map graph.
+        De-duplicates overlapping 3D landmark points and accumulates observation counts.
+        """
+        fused_landmarks = dict(global_map_points)
+        local_points = local_map_dict.get("map_points", {})
+
+        for pt_id, pt in local_points.items():
+            px, py, pz = float(pt.get("x", 0.0)), float(pt.get("y", 0.0)), float(pt.get("z", 0.0))
+            matched_id = None
+            min_dist = float("inf")
+
+            for g_id, g_pt in fused_landmarks.items():
+                gx, gy, gz = float(g_pt["x"]), float(g_pt["y"]), float(g_pt["z"])
+                dist = euclidean_distance_3d((px, py, pz), (gx, gy, gz))
+                if dist < 0.8 and dist < min_dist:
+                    min_dist = dist
+                    matched_id = g_id
+
+            if matched_id:
+                # Merge observation count
+                fused_landmarks[matched_id]["observed_count"] += int(pt.get("observed_count", 1))
+            else:
+                fused_landmarks[pt_id] = {
+                    "point_id": pt_id,
+                    "x": px,
+                    "y": py,
+                    "z": pz,
+                    "observed_count": int(pt.get("observed_count", 1))
+                }
+
+        return fused_landmarks
+
+
 fusion_engine = PerceptionFusionEngine()
 

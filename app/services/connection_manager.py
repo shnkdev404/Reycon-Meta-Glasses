@@ -50,5 +50,9 @@ class ConnectionManager:
                 self.disconnect(glass_id)
         return False
 
+    async def send_direct_message(self, glass_id: str, message: dict) -> bool:
+        """Send direct non-broadcast JSON message to a specific connected client."""
+        return await self.send_personal_message(message=message, glass_id=glass_id)
+
 
 connection_manager = ConnectionManager()

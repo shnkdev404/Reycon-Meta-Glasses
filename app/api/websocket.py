@@ -77,18 +77,24 @@ async def websocket_mobile_endpoint(websocket: WebSocket):
                     logger.warning(f"Invalid GPS data payload from '{glass_id}': {ve}")
 
             pos_dict = data.get("position", {})
+            pose_dict = data.get("pose", {})
             position = Position(
-                x=float(pos_dict.get("x", 0.0)),
-                y=float(pos_dict.get("y", 0.0)),
-                z=float(pos_dict.get("z", 0.0))
+                x=float(pos_dict.get("x", pose_dict.get("x", 0.0))),
+                y=float(pos_dict.get("y", pose_dict.get("y", 0.0))),
+                z=float(pos_dict.get("z", pose_dict.get("z", 0.0)))
             )
+
+            uploaded_map = data.get("map") or data.get("local_map")
+            tracked_objects = data.get("tracked_objects", [])
 
             glass_state = GlassState(
                 glass_id=glass_id,
                 position=position,
                 gps=gps_location,
-                heading=heading,
+                heading=float(heading or pose_dict.get("heading", 0.0)),
                 detections=detections,
+                tracked_objects=tracked_objects,
+                local_map=uploaded_map,
                 timestamp=time.time()
             )
 

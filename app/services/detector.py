@@ -9,9 +9,9 @@ logger = logging.getLogger("DetectionEngine")
 
 
 class DetectionEngine:
-    """YOLOv8 Object Detection Engine for processing video frames and parsing spatial directions & bounding boxes."""
+    """YOLO11 Object Detection Engine for processing video frames and parsing spatial directions & bounding boxes."""
 
-    def __init__(self, model_name: str = "yolov8n.pt"):
+    def __init__(self, model_name: str = "yolo11n.pt"):
         logger.info(f"Initializing YOLO model '{model_name}'...")
         self.model = YOLO(model_name)
         logger.info("YOLO model loaded successfully.")
@@ -27,7 +27,7 @@ class DetectionEngine:
 
     def detect_frame(self, frame: np.ndarray) -> List[Detection]:
         """
-        Run YOLOv8 object detection on an OpenCV frame (BGR NumPy array).
+        Run YOLO11 object detection on an OpenCV frame (BGR NumPy array).
         Returns a list of Detection Pydantic models with calculated directions and bounding box reticle coordinates.
         """
         detections: List[Detection] = []

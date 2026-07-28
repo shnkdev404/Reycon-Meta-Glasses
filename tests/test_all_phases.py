@@ -2,6 +2,9 @@
 Master Test Runner for Shared Perception Stack (Phases 1 through 11).
 Executes end-to-end unit, integration, and orchestration tests across all system phases simultaneously.
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import asyncio
 from datetime import datetime, timedelta
 

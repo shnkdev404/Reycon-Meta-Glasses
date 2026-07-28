@@ -6,7 +6,7 @@ from app.models import GlassState, Detection, GPSLocation
 
 logger = logging.getLogger("WorldManager")
 
-HAZARD_CLASSES = {"person", "car", "truck", "bus", "motorcycle", "bicycle"}
+HAZARD_CLASSES = {"car", "truck", "bus", "motorcycle", "bicycle"}
 
 
 def calculate_gps_distance_and_bearing(lat1: float, lon1: float, lat2: float, lon2: float):
@@ -58,6 +58,31 @@ class WorldManager:
             "all_devices_gps": self.get_all_devices_gps()
         }
 
+    def reset_world_state(self):
+        """Clear all active devices and threat alerts."""
+        self.active_glasses.clear()
+        self.active_threats.clear()
+
+    def prune_stale_world_objects(self, max_age_seconds: float = 5.0):
+        """Prune devices that have not transmitted telemetry recently."""
+        now = time.time()
+        stale_ids = [
+            gid for gid, state in self.active_glasses.items()
+            if (now - state.timestamp) > max_age_seconds
+        ]
+        for gid in stale_ids:
+            self.remove_glass(gid)
+
+    async def update_glass_telemetry(self, glass_state: GlassState, detections: Any = None):
+        """Process glass telemetry update and evaluate threats."""
+        if detections and isinstance(detections, list):
+            glass_state.detections = detections
+        return self.update_glass(glass_state)["threats"]
+
+    async def get_full_world_state(self) -> Dict[str, Any]:
+        """Return full world model summary for API routers and test runners."""
+        return self.get_world_state()
+
     def remove_glass(self, glass_id: str):
         """Remove device from active world state."""
         if glass_id in self.active_glasses:
@@ -72,24 +97,32 @@ class WorldManager:
         for glass_id, state in self.active_glasses.items():
             gps_info = state.gps.model_dump() if state.gps else None
             for detection in state.detections:
-                if detection.class_name.lower() in HAZARD_CLASSES:
+                obj_name = getattr(detection, 'class_name', None) or getattr(detection, 'label', '')
+                direction = getattr(detection, 'direction', 'FRONT')
+                confidence = getattr(detection, 'confidence', 0.9)
+                bbox = getattr(detection, 'bbox', [])
+                if isinstance(bbox, list):
+                    pass
+                else:
+                    bbox = []
+
+                if obj_name.split(' #')[0].lower() in HAZARD_CLASSES:
                     # Classify threat severity (CRITICAL vs WARNING)
-                    is_critical = (detection.direction == "FRONT") or (detection.confidence > 0.85)
+                    is_critical = (direction == "FRONT") or (confidence > 0.85)
                     severity = "CRITICAL" if is_critical else "WARNING"
 
                     threat = {
                         "glass_id": glass_id,
                         "severity": severity,
-                        "class_name": detection.class_name,
-                        "confidence": detection.confidence,
-                        "direction": detection.direction,
-                        "bbox": detection.bbox,
+                        "class_name": obj_name,
+                        "confidence": confidence,
+                        "direction": direction,
+                        "bbox": bbox,
                         "heading": state.heading,
                         "gps": gps_info,
                         "timestamp": time.time(),
                         "warning_message": (
-                            f"[{severity}] HAZARD DETECTED: {detection.class_name.upper()} on {detection.direction} "
-                            f"(Confidence: {int(detection.confidence * 100)}%)"
+                            f"{severity}: {obj_name.upper()} detected on {direction} zone!"
                         )
                     }
                     threats.append(threat)
@@ -145,10 +178,14 @@ class WorldManager:
 
             # Add vision detections as relative hazard blips
             for idx, det in enumerate(state.detections):
+                direction = getattr(det, 'direction', 'FRONT')
+                obj_name = getattr(det, 'class_name', None) or getattr(det, 'label', 'object')
+                confidence = getattr(det, 'confidence', 0.9)
+
                 angle_offset = 0.0
-                if det.direction == "LEFT":
+                if direction == "LEFT":
                     angle_offset = -30.0
-                elif det.direction == "RIGHT":
+                elif direction == "RIGHT":
                     angle_offset = 30.0
 
                 det_bearing = (state.heading + angle_offset) % 360.0
@@ -157,15 +194,17 @@ class WorldManager:
                 det_dx = round(est_dist * math.sin(rad), 2)
                 det_dy = round(est_dist * math.cos(rad), 2)
 
+                is_hazard = obj_name.split(' #')[0].lower() in HAZARD_CLASSES
                 blips.append({
                     "id": f"{gid}_det_{idx}",
-                    "type": "HAZARD" if det.class_name.lower() in HAZARD_CLASSES else "OBJECT",
-                    "label": f"{det.class_name.upper()} ({int(det.confidence * 100)}%)",
+                    "type": "HAZARD" if is_hazard else "OBJECT",
+                    "label": f"{obj_name.upper()} ({int(confidence * 100)}%)",
                     "dx_m": det_dx,
                     "dy_m": det_dy,
                     "distance_m": est_dist,
                     "bearing_deg": det_bearing,
-                    "direction": det.direction
+                    "heading": state.heading,
+                    "gps": None
                 })
 
         return blips
@@ -184,9 +223,21 @@ class WorldManager:
 
     def get_world_state(self) -> Dict[str, Any]:
         """Return full current snapshot of active devices, GPS locations, and threats."""
+        world_objs = {}
+        for gid, g in self.active_glasses.items():
+            for idx, det in enumerate(g.detections):
+                obj_name = getattr(det, 'class_name', None) or getattr(det, 'label', 'obj')
+                world_objs[f"{gid}_obj_{idx}"] = {
+                    "object_id": f"{gid}_obj_{idx}",
+                    "label": obj_name,
+                    "confidence": getattr(det, 'confidence', 0.9)
+                }
+
         return {
             "active_devices_count": len(self.active_glasses),
+            "active_glasses_count": len(self.active_glasses),
             "glasses": {gid: g.model_dump() for gid, g in self.active_glasses.items()},
+            "world_objects": world_objs,
             "active_threats": self.active_threats,
             "timestamp": time.time()
         }

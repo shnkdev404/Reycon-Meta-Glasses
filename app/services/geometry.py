@@ -173,3 +173,24 @@ def pixel_to_camera_ray(
     norm = math.sqrt(x_c ** 2 + y_c ** 2 + z_c ** 2)
     return round(x_c / norm, 4), round(z_c / norm, 4), round(-y_c / norm, 4)
 
+
+def pixel_to_world_3d(
+    u: float,
+    v: float,
+    distance_m: float,
+    glass_pose: GlassPose,
+    image_w: float = 640.0,
+    image_h: float = 480.0,
+    hfov_deg: float = 90.0
+) -> Tuple[float, float, float]:
+    """
+    Convert 2D pixel coordinates (u, v) and distance estimate into global 3D world coordinates.
+    Pixel Coordinates -> Camera Coordinates -> SLAM Coordinates -> Global World Coordinates.
+    """
+    rx, ry, rz = pixel_to_camera_ray(u, v, image_w, image_h, hfov_deg)
+    rel_x = rx * distance_m
+    rel_y = ry * distance_m
+    rel_z = rz * distance_m
+
+    return camera_to_world_3d(rel_x, rel_y, rel_z, glass_pose)
+
