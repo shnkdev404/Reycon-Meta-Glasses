@@ -1,16 +1,32 @@
 """
-Shared Perception Safety System - Central Laptop Server.
-FastAPI + WebSockets + YOLOv8 + OpenCV Computer Vision.
+Shared Perception Safety System - Central Server Main App.
 """
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+# Core application routers
 from app.api.websocket import router as ws_router
 from app.api.routes import router as api_router
 from app.dashboard.visualizer import router as dashboard_router
 
+# Shared Perception routers
+try:
+    from app.api.shared_websocket import router as shared_ws_router
+except (ImportError, AttributeError):
+    from fastapi import APIRouter
+    shared_ws_router = APIRouter()
+
+try:
+    from app.api.shared_routes import router as shared_api_router
+except (ImportError, AttributeError):
+    from fastapi import APIRouter
+    shared_api_router = APIRouter()
+
 app = FastAPI(
     title="Shared Perception Safety System",
-    description="Laptop-Centric Collaborative Perception & Threat Warning System for Construction Sites",
+    description="Laptop-Centric Collaborative Perception & Threat Warning System",
     version="1.0.0"
 )
 
@@ -27,6 +43,12 @@ app.add_middleware(
 app.include_router(ws_router)
 app.include_router(api_router)
 app.include_router(dashboard_router)
+app.include_router(shared_ws_router)
+app.include_router(shared_api_router)
+
+# Mount /public static files directory
+os.makedirs("public", exist_ok=True)
+app.mount("/public", StaticFiles(directory="public"), name="public")
 
 
 @app.get("/")
@@ -41,3 +63,8 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REYCON Shared Perception Command Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #05080e;
+            --panel-bg: rgba(13, 20, 33, 0.85);
+            --border-color: rgba(0, 242, 254, 0.2);
+            --accent-cyan: #00f2fe;
+            --accent-green: #00e676;
+            --accent-red: #ff1744;
+            --accent-gray: #94a3b8;
+            --accent-purple: #a855f7;
+            --text-main: #f0f4f8;
+            --font-main: 'Outfit', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(0, 242, 254, 0.08) 0%, transparent 60%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        header {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-badge {
+            background: linear-gradient(135deg, var(--accent-cyan), #0077ff);
+            color: #000;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 230, 118, 0.1);
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--accent-green);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        main {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            flex: 1;
+        }
+
+        .canvas-container {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            font-size: 0.82rem;
+            color: #94a3b8;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .square-icon {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-green);
+            border-radius: 2px;
+        }
+
+        .circle-icon {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-red);
+            border-radius: 50%;
+        }
+
+        .line-icon {
+            width: 18px;
+            height: 2px;
+            border-top: 2px dashed var(--accent-cyan);
+        }
+
+        .dot-icon {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-gray);
+            border-radius: 50%;
+        }
+
+        canvas {
+            width: 100%;
+            height: 520px;
+            background: #03060c;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(0, 119, 255, 0.15));
+            border: 1px solid var(--accent-cyan);
+            color: var(--text-main);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-family: var(--font-main);
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(0, 119, 255, 0.3));
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .log-box {
+            background: #020408;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #38bdf8;
+            max-height: 180px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <span class="brand-badge">REYCON</span>
+            <h1>Shared Perception 3D Command Dashboard</h1>
+        </div>
+        <div class="status-pill">
+            <span class="status-dot"></span>
+            <span>SYSTEM ACTIVE</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="canvas-container">
+            <div class="canvas-header">
+                <h2>Spatial Collaboration Radar</h2>
+                <div class="legend">
+                    <div class="legend-item"><span class="square-icon"></span> Glass Position</div>
+                    <div class="legend-item"><span class="circle-icon"></span> Threat Object</div>
+                    <div class="legend-item"><span class="line-icon"></span> Collaboration Link</div>
+                    <div class="legend-item"><span class="dot-icon"></span> Persistent Landmark</div>
+                </div>
+            </div>
+            <canvas id="radarCanvas"></canvas>
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
+                <div class="card-title">Shared Intelligence Metrics</div>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="statGlasses" style="color: var(--accent-green);">0</div>
+                        <div class="stat-label">Active Glasses</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="statThreats" style="color: var(--accent-red);">0</div>
+                        <div class="stat-label">Active Hazards</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="statMapPoints" style="color: var(--accent-gray);">0</div>
+                        <div class="stat-label">Map Landmarks</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="statKeyframes" style="color: var(--accent-cyan);">0</div>
+                        <div class="stat-label">SLAM Keyframes</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Simulation Controls</div>
+                <div class="btn-group">
+                    <button onclick="simulateGlassesDemo()">🚀 Trigger Glass A & Glass B Telemetry</button>
+                    <button onclick="fetchWorldState()">🔄 Refresh World State</button>
+                    <button onclick="resetServerState()" style="border-color: var(--accent-red); color: var(--accent-red);">🗑️ Reset Shared World</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Live Event Stream</div>
+                <div class="log-box" id="eventLog">System ready. Polling /api/shared/world_state...</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('radarCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth - 40;
+            canvas.height = 520;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let worldData = {
+            glasses: {},
+            threats: [],
+            map_points: [],
+            stats: {}
+        };
+
+        async function fetchWorldState() {
+            try {
+                const res = await fetch('/api/shared/world_state');
+                const data = await res.json();
+                if (data.status === 'success') {
+                    worldData = data;
+                    updateUI();
+                }
+            } catch (err) {
+                console.error("Error fetching world state:", err);
+            }
+        }
+
+        function updateUI() {
+            // Metrics
+            document.getElementById('statGlasses').innerText = Object.keys(worldData.glasses).length;
+            document.getElementById('statThreats').innerText = worldData.threats.length;
+            document.getElementById('statMapPoints').innerText = worldData.map_points.length;
+            document.getElementById('statKeyframes').innerText = (worldData.stats && worldData.stats.total_keyframes) || 0;
+
+            drawRadar();
+        }
+
+        function drawRadar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const scale = 12; // 1 meter = 12 pixels
+
+            // Draw grid & concentric radar circles
+            ctx.strokeStyle = 'rgba(0, 242, 254, 0.08)';
+            ctx.lineWidth = 1;
+            for (let r = 50; r <= 350; r += 50) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Crosshair
+            ctx.beginPath();
+            ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height);
+            ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY);
+            ctx.stroke();
+
+            // 1. Draw Persistent Map Points (Gray Dots)
+            ctx.fillStyle = '#94a3b8';
+            worldData.map_points.forEach(pt => {
+                const pos = pt.position || pt;
+                const px = centerX + (pos.x * scale);
+                const py = centerY - (pos.y * scale);
+                ctx.beginPath();
+                ctx.arc(px, py, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 2. Draw Collaboration Graph (Cyan Dashed Lines between glasses < 50m)
+            const glassList = Object.values(worldData.glasses);
+            ctx.strokeStyle = '#00f2fe';
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i < glassList.length; i++) {
+                for (let j = i + 1; j < glassList.length; j++) {
+                    const g1 = glassList[i].position;
+                    const g2 = glassList[j].position;
+                    const dx = g1.x - g2.x;
+                    const dy = g1.y - g2.y;
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    if (dist <= 50.0) {
+                        ctx.beginPath();
+                        ctx.moveTo(centerX + (g1.x * scale), centerY - (g1.y * scale));
+                        ctx.lineTo(centerX + (g2.x * scale), centerY - (g2.y * scale));
+                        ctx.stroke();
+                    }
+                }
+            }
+            ctx.setLineDash([]); // Reset dashed line
+
+            // 3. Draw Threats (Red Circles)
+            worldData.threats.forEach(th => {
+                const pos = th.position;
+                const tx = centerX + (pos.x * scale);
+                const ty = centerY - (pos.y * scale);
+
+                // Pulse circle
+                ctx.fillStyle = 'rgba(255, 23, 68, 0.2)';
+                ctx.beginPath();
+                ctx.arc(tx, ty, 16, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Core dot
+                ctx.fillStyle = '#ff1744';
+                ctx.beginPath();
+                ctx.arc(tx, ty, 7, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Label
+                ctx.fillStyle = '#ff1744';
+                ctx.font = '11px "JetBrains Mono"';
+                ctx.fillText(`🚨 ${th.type} (${th.detected_by || 'shared'})`, tx + 10, ty + 4);
+            });
+
+            // 4. Draw Glasses (Green Squares)
+            glassList.forEach(g => {
+                const pos = g.position;
+                const gx = centerX + (pos.x * scale);
+                const gy = centerY - (pos.y * scale);
+
+                ctx.fillStyle = '#00e676';
+                ctx.fillRect(gx - 7, gy - 7, 14, 14);
+
+                ctx.fillStyle = '#00e676';
+                ctx.font = '12px "Outfit"';
+                ctx.fillText(`🕶️ ${g.id}`, gx + 10, gy + 4);
+            });
+        }
+
+        async function simulateGlassesDemo() {
+            logEvent("🚀 Simulating Glass A & Glass B Telemetry...");
+            const wsA = new WebSocket(`ws://${location.host}/ws/glass/glass_a`);
+            const wsB = new WebSocket(`ws://${location.host}/ws/glass/glass_b`);
+
+            wsA.onopen = () => {
+                wsA.send(JSON.stringify({
+                    type: "telemetry",
+                    position: { x: -10, y: 15, z: 0 },
+                    detections: [],
+                    map_points: [
+                        { point_id: "lm_1", position: { x: -12, y: 18, z: 0 } },
+                        { point_id: "lm_2", position: { x: -8, y: 12, z: 0 } }
+                    ]
+                }));
+            };
+
+            wsB.onopen = () => {
+                wsB.send(JSON.stringify({
+                    type: "telemetry",
+                    position: { x: 15, y: 20, z: 0 },
+                    detections: [
+                        { object_type: "forklift", position: { x: 18, y: 25, z: 0 }, confidence: 0.95 }
+                    ],
+                    map_points: [
+                        { point_id: "lm_3", position: { x: 20, y: 22, z: 0 } }
+                    ]
+                }));
+            };
+
+            setTimeout(fetchWorldState, 500);
+        }
+
+        async function resetServerState() {
+            await fetch('/api/shared/reset', { method: 'POST' });
+            logEvent("🗑️ Server state reset.");
+            fetchWorldState();
+        }
+
+        function logEvent(msg) {
+            const box = document.getElementById('eventLog');
+            const time = new Date().toLocaleTimeString();
+            box.innerText = `[${time}] ${msg}\n` + box.innerText;
+        }
+
+        // Auto-poll state every 2 seconds
+        setInterval(fetchWorldState, 2000);
+        fetchWorldState();
+    </script>
+</body>
+</html>
