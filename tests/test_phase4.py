@@ -1,6 +1,8 @@
-"""
-Automated unit and integration tests for Phase 4: Pose Estimation & Visual SLAM.
-"""
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from app.vision.slam import SLAMManager
 from app.models.glass import GlassPose, GlassSensors
 

@@ -597,10 +597,17 @@
             // Draw concentric range circles (GitHub style dark gray grid)
             ctx.strokeStyle = '#21262d';
             ctx.lineWidth = 1;
-            for (let r = 40; r <= 400; r += 40) {
+            ctx.fillStyle = '#484f58';
+            ctx.font = '10px "JetBrains Mono"';
+            
+            for (let meters = 5; meters <= 40; meters += 5) {
+                const r = meters * zoomScale;
+                if (r > Math.max(canvas.width, canvas.height)) break;
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
                 ctx.stroke();
+                // Distance indicator tag
+                ctx.fillText(`${meters}m`, centerX + r + 4, centerY - 4);
             }
 
             // Crosshair
@@ -609,6 +616,56 @@
             ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height);
             ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY);
             ctx.stroke();
+
+            // Track placed text label bounding boxes to prevent overlapping text
+            const placedLabels = [];
+
+            function drawSmartLabel(text, targetX, targetY, color, isAlert = false) {
+                ctx.font = isAlert ? '600 11px "JetBrains Mono"' : '600 12px "Inter"';
+                const metrics = ctx.measureText(text);
+                const padding = 4;
+                const width = metrics.width + (padding * 2);
+                const height = 16;
+                
+                let labelX = targetX + 12;
+                let labelY = targetY - 8;
+
+                // Adjust label position if it collides with an existing label
+                let attempts = 0;
+                while (attempts < 6) {
+                    let collision = false;
+                    for (const box of placedLabels) {
+                        if (
+                            labelX < box.x + box.w &&
+                            labelX + width > box.x &&
+                            labelY < box.y + box.h &&
+                            labelY + height > box.y
+                        ) {
+                            collision = true;
+                            break;
+                        }
+                    }
+                    if (!collision) break;
+                    labelY += 18; // Stagger downward
+                    attempts++;
+                }
+
+                // Record label bounding box
+                placedLabels.push({ x: labelX, y: labelY, w: width, h: height });
+
+                // Draw background pill box for maximum readability
+                ctx.fillStyle = 'rgba(13, 17, 23, 0.9)';
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(labelX, labelY, width, height, 4);
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw text label
+                ctx.fillStyle = color;
+                ctx.fillText(text, labelX + padding, labelY + 12);
+            }
 
             // 1. Render SLAM Landmark Points (Gray Dots)
             ctx.fillStyle = '#8b949e';
@@ -643,8 +700,20 @@
             }
             ctx.setLineDash([]);
 
-            // 3. Render Threats (Red Pulsing Circles)
-            worldData.threats.forEach(th => {
+            // 3. Render Glass Devices (Green Squares) - Draw before threats so threats appear on top
+            glassList.forEach(g => {
+                const pos = g.position;
+                const gx = centerX + (pos.x * zoomScale);
+                const gy = centerY - (pos.y * zoomScale);
+
+                ctx.fillStyle = '#3fb950';
+                ctx.fillRect(gx - 6, gy - 6, 12, 12);
+                drawSmartLabel(`🕶️ ${g.id}`, gx, gy, '#3fb950', false);
+            });
+
+            // 4. Render Active Threats (Red Pulsing Circles) - Deduplicate duplicate threat entries
+            const activeThreats = (worldData.threats || []).slice(-15); // Show top 15 active/recent threats
+            activeThreats.forEach(th => {
                 const pos = th.position;
                 const tx = centerX + (pos.x * zoomScale);
                 const ty = centerY - (pos.y * zoomScale);
@@ -652,7 +721,7 @@
                 // Pulse ring
                 ctx.fillStyle = 'rgba(248, 81, 73, 0.25)';
                 ctx.beginPath();
-                ctx.arc(tx, ty, 15, 0, Math.PI * 2);
+                ctx.arc(tx, ty, 14, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Core red dot
@@ -661,24 +730,8 @@
                 ctx.arc(tx, ty, 6, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Label
-                ctx.fillStyle = '#f85149';
-                ctx.font = '600 11px "JetBrains Mono"';
-                ctx.fillText(`🚨 ${th.type} (${th.detected_by || 'shared'})`, tx + 10, ty + 4);
-            });
-
-            // 4. Render Glass Devices (Green Squares)
-            glassList.forEach(g => {
-                const pos = g.position;
-                const gx = centerX + (pos.x * zoomScale);
-                const gy = centerY - (pos.y * zoomScale);
-
-                ctx.fillStyle = '#3fb950';
-                ctx.fillRect(gx - 6, gy - 6, 12, 12);
-
-                ctx.fillStyle = '#3fb950';
-                ctx.font = '600 12px "Inter"';
-                ctx.fillText(`🕶️ ${g.id}`, gx + 10, gy + 4);
+                const labelStr = `🚨 ${th.type} (${th.detected_by || 'shared'})`;
+                drawSmartLabel(labelStr, tx, ty, '#f85149', true);
             });
         }
 

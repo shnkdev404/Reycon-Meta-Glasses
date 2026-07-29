@@ -83,7 +83,7 @@
                 <div style="font-size: 0.78rem; color: var(--color-fg-muted);">● Connected Glasses  ● Hazards  ● SLAM Graph</div>
             </div>
             <div class="gh-box-body">
-                <canvas id="serverCanvas"></canvas>
+                <canvas id="radarCanvas"></canvas>
             </div>
         </div>
 
@@ -115,7 +115,7 @@
     </div>
 
     <script>
-        const canvas = document.getElementById('serverCanvas');
+        const canvas = document.getElementById('radarCanvas');
         const ctx = canvas.getContext('2d');
 
         function resize() {
@@ -143,8 +143,45 @@
             const s = 12;
 
             ctx.strokeStyle = '#21262d';
+            ctx.lineWidth = 1;
             for (let r = 40; r <= 400; r += 40) {
                 ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+            }
+
+            const placedLabels = [];
+            function drawLabel(text, tx, ty, color) {
+                ctx.font = '600 11px "JetBrains Mono"';
+                const metrics = ctx.measureText(text);
+                const width = metrics.width + 8;
+                const height = 16;
+                let lx = tx + 12;
+                let ly = ty - 8;
+
+                let attempts = 0;
+                while (attempts < 6) {
+                    let col = false;
+                    for (const b of placedLabels) {
+                        if (lx < b.x + b.w && lx + width > b.x && ly < b.y + b.h && ly + height > b.y) {
+                            col = true; break;
+                        }
+                    }
+                    if (!col) break;
+                    ly += 18;
+                    attempts++;
+                }
+
+                placedLabels.push({ x: lx, y: ly, w: width, h: height });
+
+                ctx.fillStyle = 'rgba(13, 17, 23, 0.9)';
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.roundRect(lx, ly, width, height, 4);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = color;
+                ctx.fillText(text, lx + 4, ly + 12);
             }
 
             // Render Glasses (Green)
@@ -153,16 +190,17 @@
                 const py = cy - (g.position.y * s);
                 ctx.fillStyle = '#3fb950';
                 ctx.fillRect(px - 6, py - 6, 12, 12);
-                ctx.fillText(`🕶️ ${g.id}`, px + 10, py + 4);
+                drawLabel(`🕶️ ${g.id}`, px, py, '#3fb950');
             });
 
             // Render Threats (Red)
-            (data.threats || []).forEach(t => {
+            const activeThreats = (data.threats || []).slice(-15);
+            activeThreats.forEach(t => {
                 const tx = cx + (t.position.x * s);
                 const ty = cy - (t.position.y * s);
                 ctx.fillStyle = '#f85149';
                 ctx.beginPath(); ctx.arc(tx, ty, 6, 0, Math.PI * 2); ctx.fill();
-                ctx.fillText(`🚨 ${t.type}`, tx + 10, ty + 4);
+                drawLabel(`🚨 ${t.type}`, tx, ty, '#f85149');
             });
         }
 
