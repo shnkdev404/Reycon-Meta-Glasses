@@ -5,6 +5,7 @@ Manages all glasses, detections, threats, and the global map.
 Key Feature: If Glass B detects threat → Glass A gets notified
             even if Glass A can't see it!
 """
+import math
 import numpy as np
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field, asdict
@@ -74,6 +75,67 @@ class Keyframe:
     timestamp: float
     map_points: List[str] = field(default_factory=list)  # point_ids
 
+def extract_heading_deg(data: dict) -> float:
+    """
+    Extract 0-360 compass heading / yaw angle in degrees from diverse telemetry formats:
+    - Direct scalar: 'heading', 'compass', 'yaw', 'bearing'
+    - Nested dict: 'pose': {'heading': ...} or {'yaw': ...}
+    - 4x4 Transformation matrix array: 'pose': [[r00, r01, ...], ...] -> yaw = atan2(R[1, 0], R[0, 0])
+    - Quaternion: 'orientation': {'x':..., 'y':..., 'z':..., 'w':...} -> yaw = atan2(2*(w*z + x*y), 1 - 2*(y^2 + z^2))
+    - Direction vector: 'direction': {'x':..., 'y':...} or [dx, dy] -> yaw = atan2(dy, dx)
+    """
+    if not isinstance(data, dict):
+        return 0.0
+
+    # 1. Direct scalar field
+    for k in ["heading", "compass", "yaw", "bearing", "orientation_deg"]:
+        val = data.get(k)
+        if val is not None and isinstance(val, (int, float)):
+            return float(val) % 360.0
+
+    # 2. Check pose field
+    raw_pose = data.get("pose")
+    if isinstance(raw_pose, dict):
+        for k in ["heading", "yaw", "compass"]:
+            if k in raw_pose and isinstance(raw_pose[k], (int, float)):
+                return float(raw_pose[k]) % 360.0
+    elif isinstance(raw_pose, (list, np.ndarray)):
+        arr = np.array(raw_pose, dtype=float)
+        if arr.shape == (4, 4) or arr.shape == (3, 3):
+            # Rotation matrix: yaw angle in XY plane
+            r00, r01 = arr[0, 0], arr[0, 1]
+            r10, r11 = arr[1, 0], arr[1, 1]
+            yaw_rad = math.atan2(r10, r00)
+            return math.degrees(yaw_rad) % 360.0
+
+    # 3. Check orientation field (quaternion or euler)
+    orient = data.get("orientation")
+    if isinstance(orient, dict):
+        if "yaw" in orient and isinstance(orient["yaw"], (int, float)):
+            return float(orient["yaw"]) % 360.0
+        if all(k in orient for k in ["x", "y", "z", "w"]):
+            x, y, z, w = float(orient["x"]), float(orient["y"]), float(orient["z"]), float(orient["w"])
+            yaw_rad = math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
+            return math.degrees(yaw_rad) % 360.0
+    elif isinstance(orient, (list, tuple)) and len(orient) == 4:
+        x, y, z, w = float(orient[0]), float(orient[1]), float(orient[2]), float(orient[3])
+        yaw_rad = math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
+        return math.degrees(yaw_rad) % 360.0
+
+    # 4. Check direction vector
+    direction = data.get("direction")
+    if isinstance(direction, (list, tuple)) and len(direction) >= 2:
+        dx, dy = float(direction[0]), float(direction[1])
+        if abs(dx) > 1e-4 or abs(dy) > 1e-4:
+            return math.degrees(math.atan2(dy, dx)) % 360.0
+    elif isinstance(direction, dict) and "x" in direction and "y" in direction:
+        dx, dy = float(direction["x"]), float(direction["y"])
+        if abs(dx) > 1e-4 or abs(dy) > 1e-4:
+            return math.degrees(math.atan2(dy, dx)) % 360.0
+
+    return 0.0
+
+
 class SharedWorldManager:
     """
     Central server that maintains:
@@ -98,13 +160,59 @@ class SharedWorldManager:
         self.map_file = "data/shared_map.json"
         self.keyframe_file = "data/keyframes.npz"
         
+        # GPS Reference Anchor for relative room coordinate projection
+        self.ref_gps: Optional[Tuple[float, float]] = None
+        
         # Thread lock for concurrent access
         self.lock = threading.RLock()
         
-        # Load saved map
+        # Load saved map and sync persistent objects
         self.load_map()
+        self.sync_persistent_objects()
         
         logger.info("✅ SharedWorldManager initialized")
+
+    def resolve_glass_position(self, position_in: Any, gps_info: Optional[Any] = None) -> Position3D:
+        """
+        Resolve 3D Cartesian position from position dictionary/object or GPS geographic coordinates.
+        If position is zero/empty and valid GPS coordinates are supplied, project GPS location relative
+        to the reference anchor GPS location.
+        """
+        x, y, z = 0.0, 0.0, 0.0
+        if hasattr(position_in, "x"):
+            x = float(getattr(position_in, "x", 0.0))
+            y = float(getattr(position_in, "y", 0.0))
+            z = float(getattr(position_in, "z", 0.0))
+        elif isinstance(position_in, dict):
+            x = float(position_in.get("x", 0.0))
+            y = float(position_in.get("y", 0.0))
+            z = float(position_in.get("z", 0.0))
+
+        # Convert GPS to relative Cartesian meters if x and y are 0.0
+        if abs(x) < 1e-4 and abs(y) < 1e-4 and gps_info:
+            lat, lon = None, None
+            if hasattr(gps_info, "latitude"):
+                lat = float(getattr(gps_info, "latitude", 0.0))
+                lon = float(getattr(gps_info, "longitude", 0.0))
+            elif isinstance(gps_info, dict):
+                lat = float(gps_info.get("latitude", 0.0))
+                lon = float(gps_info.get("longitude", 0.0))
+
+            if lat is not None and lon is not None and abs(lat) > 1.0 and abs(lon) > 1.0:
+                if self.ref_gps is None:
+                    self.ref_gps = (lat, lon)
+                    x, y = 0.0, 0.0
+                else:
+                    ref_lat, ref_lon = self.ref_gps
+                    dlat_rad = math.radians(lat - ref_lat)
+                    dlon_rad = math.radians(lon - ref_lon)
+                    avg_lat_rad = math.radians((ref_lat + lat) / 2.0)
+                    R_earth = 6371000.0
+                    x = dlon_rad * math.cos(avg_lat_rad) * R_earth
+                    y = dlat_rad * R_earth
+
+        return Position3D(x=round(x, 2), y=round(y, 2), z=round(z, 2))
+
     
     # ============ GLASS MANAGEMENT ============
     
@@ -123,21 +231,36 @@ class SharedWorldManager:
             }
             logger.info(f"✅ Glass registered: {glass_id} at {position} heading={heading}°")
     
-    def update_glass_pose(self, glass_id: str, pose: np.ndarray, position: Position3D, heading: float = 0.0):
+    def update_glass_pose(self, glass_id: str, pose: np.ndarray, position: Position3D, heading: float = 0.0, gps_info: Optional[Any] = None):
         """Update glass position and orientation"""
         with self.lock:
+            resolved_pos = self.resolve_glass_position(position, gps_info)
             if glass_id not in self.glasses:
-                self.register_glass(glass_id, position, heading)
+                self.register_glass(glass_id, resolved_pos, heading)
             else:
                 self.glasses[glass_id]['pose'] = pose
-                self.glasses[glass_id]['position'] = position
+                self.glasses[glass_id]['position'] = resolved_pos
                 self.glasses[glass_id]['heading'] = float(heading)
                 self.glasses[glass_id]['timestamp'] = datetime.now().timestamp()
                 self.glasses[glass_id]['connected'] = True
+
     
+    def prune_stale_glasses(self, max_age_seconds: float = 15.0):
+        """Remove inactive glass devices that have not sent telemetry recently."""
+        with self.lock:
+            now = datetime.now().timestamp()
+            stale_ids = [
+                gid for gid, ginfo in self.glasses.items()
+                if (now - ginfo.get('timestamp', 0)) > max_age_seconds
+            ]
+            for gid in stale_ids:
+                del self.glasses[gid]
+                logger.info(f"🧹 Pruned stale glass device '{gid}' due to inactivity.")
+
     def get_glass_position(self, glass_id: str) -> Optional[Position3D]:
         """Get glass position"""
         with self.lock:
+            self.prune_stale_glasses()
             if glass_id in self.glasses:
                 return self.glasses[glass_id]['position']
         return None
@@ -188,9 +311,39 @@ class SharedWorldManager:
                 'detected_by': detected_by_glass_id,
                 'timestamp': datetime.now().isoformat()
             })
+
+            # Save to persistent memory store
+            try:
+                from app.services.memory_manager import memory_manager
+                memory_manager.add_or_update_object(
+                    object_id=target_id,
+                    label=object_type,
+                    position=position.to_dict(),
+                    detected_by=detected_by_glass_id,
+                    confidence=confidence
+                )
+            except Exception as e:
+                logger.error(f"Error persisting object to memory: {e}")
             
             logger.info(f"🚨 Threat updated: {object_type} [{target_id}] at {position}")
             return threat
+
+    def correct_object_label(self, object_id: str, new_label: str) -> Optional[dict]:
+        """Correct object label in active threats, map memory, and persistent disk store."""
+        with self.lock:
+            from app.services.memory_manager import memory_manager
+            updated_obj = memory_manager.correct_object_label(object_id, new_label)
+
+            # Update active threat if present
+            if object_id in self.threats:
+                self.threats[object_id].object_type = new_label
+            else:
+                for tid, threat in self.threats.items():
+                    if object_id in tid or tid in object_id:
+                        threat.object_type = new_label
+
+            return updated_obj
+
     
     def get_threats_for_glass(self, glass_id: str, max_distance: float = 20.0) -> List[ThreatObject]:
         """
@@ -456,7 +609,36 @@ class SharedWorldManager:
                 'connected_glasses': sum(1 for g in self.glasses.values() if g.get('connected'))
             }
     
-    def reset(self):
+    def sync_persistent_objects(self):
+        """Load persistent remembered objects from PersistentMemoryManager into initial threats."""
+        try:
+            from app.services.memory_manager import memory_manager
+            objs = memory_manager.get_all_persistent_objects()
+            for obj in objs:
+                tid = obj.get("object_id", "")
+                lbl = obj.get("label", "object")
+                pos_dict = obj.get("position", {})
+                pos = Position3D(
+                    x=float(pos_dict.get("x", 0.0)) if isinstance(pos_dict, dict) else 0.0,
+                    y=float(pos_dict.get("y", 0.0)) if isinstance(pos_dict, dict) else 0.0,
+                    z=float(pos_dict.get("z", 0.0)) if isinstance(pos_dict, dict) else 0.0
+                )
+                by_id = obj.get("detected_by", "system")
+                conf = float(obj.get("confidence", 0.85))
+
+                threat = ThreatObject(
+                    threat_id=tid,
+                    object_type=lbl,
+                    position=pos,
+                    confidence=conf,
+                    detected_by_glass_id=by_id
+                )
+                self.threats[tid] = threat
+            logger.info(f"📂 Synced {len(objs)} persistent objects into SharedWorldManager.")
+        except Exception as e:
+            logger.error(f"Error syncing persistent objects into SharedWorldManager: {e}")
+
+    def reset(self, clear_persistent_memory: bool = True):
         """Reset all data (for new session)"""
         with self.lock:
             self.glasses.clear()
@@ -464,7 +646,16 @@ class SharedWorldManager:
             self.map_points.clear()
             self.keyframes.clear()
             self.threat_history.clear()
+            self.ref_gps = None
+            if clear_persistent_memory:
+                try:
+                    from app.services.memory_manager import memory_manager
+                    memory_manager.clear_persistent_objects()
+                except Exception as e:
+                    logger.error(f"Error clearing persistent memory on reset: {e}")
             logger.info("🔄 World manager reset")
+
 
 # Global instance
 world_manager = SharedWorldManager()
+

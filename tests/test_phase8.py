@@ -1,6 +1,10 @@
 """
 Automated unit and integration tests for Phase 8: Threat Prediction Engine.
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from datetime import datetime
 from app.models.glass import GlassState, GlassPose
 from app.models.object import WorldObject

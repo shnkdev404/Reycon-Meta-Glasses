@@ -1,0 +1,498 @@
+{
+  "threat_phone_01_laptop": {
+    "object_id": "threat_phone_01_laptop",
+    "label": "laptop",
+    "original_label": "laptop",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.17,
+      "y": 0.47,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.9635,
+    "first_seen": 1785351086.107455,
+    "last_seen": 1785351375.2394335
+  },
+  "threat_phone_01_cat": {
+    "object_id": "threat_phone_01_cat",
+    "label": "cat",
+    "original_label": "cat",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.14,
+      "y": 0.48,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.4618,
+    "first_seen": 1785351086.2807765,
+    "last_seen": 1785351189.2992837
+  },
+  "threat_phone_01_person": {
+    "object_id": "threat_phone_01_person",
+    "label": "person",
+    "original_label": "person",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.79,
+      "y": 2.89,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.8706,
+    "first_seen": 1785351087.480317,
+    "last_seen": 1785351375.2432847
+  },
+  "threat_phone_01_boat": {
+    "object_id": "threat_phone_01_boat",
+    "label": "boat",
+    "original_label": "boat",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -2.34,
+      "y": 0.37,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.6068,
+    "first_seen": 1785351090.094938,
+    "last_seen": 1785351353.5467188
+  },
+  "threat_phone_01_tv": {
+    "object_id": "threat_phone_01_tv",
+    "label": "tv",
+    "original_label": "tv",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.34,
+      "y": 1.04,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.6689,
+    "first_seen": 1785351090.0967233,
+    "last_seen": 1785351357.5647142
+  },
+  "threat_phone_01_cup": {
+    "object_id": "threat_phone_01_cup",
+    "label": "cup",
+    "original_label": "cup",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.03,
+      "y": 0.62,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.4766,
+    "first_seen": 1785351090.202088,
+    "last_seen": 1785351238.8398807
+  },
+  "threat_phone_01_carrot": {
+    "object_id": "threat_phone_01_carrot",
+    "label": "carrot",
+    "original_label": "carrot",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.79,
+      "y": 3.87,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.4066,
+    "first_seen": 1785351090.4318032,
+    "last_seen": 1785351090.4318032
+  },
+  "threat_phone_01_refrigerator": {
+    "object_id": "threat_phone_01_refrigerator",
+    "label": "refrigerator",
+    "original_label": "refrigerator",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.52,
+      "y": 1.99,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.7871,
+    "first_seen": 1785351090.6496654,
+    "last_seen": 1785351257.2200568
+  },
+  "threat_phone_01_dining table": {
+    "object_id": "threat_phone_01_dining table",
+    "label": "dining table",
+    "original_label": "dining table",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -1.29,
+      "y": 1.94,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.3308,
+    "first_seen": 1785351090.6529076,
+    "last_seen": 1785351255.3399184
+  },
+  "threat_phone_01_handbag": {
+    "object_id": "threat_phone_01_handbag",
+    "label": "handbag",
+    "original_label": "handbag",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.96,
+      "y": 1.54,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.2696,
+    "first_seen": 1785351090.6548831,
+    "last_seen": 1785351090.6548831
+  },
+  "threat_phone_01_microwave": {
+    "object_id": "threat_phone_01_microwave",
+    "label": "microwave",
+    "original_label": "microwave",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -2.54,
+      "y": 2.19,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.4018,
+    "first_seen": 1785351090.8696542,
+    "last_seen": 1785351256.2092578
+  },
+  "threat_phone_01_suitcase": {
+    "object_id": "threat_phone_01_suitcase",
+    "label": "suitcase",
+    "original_label": "suitcase",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -5.24,
+      "y": 1.99,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.8162,
+    "first_seen": 1785351091.6934268,
+    "last_seen": 1785351355.1140711
+  },
+  "threat_phone_01_oven": {
+    "object_id": "threat_phone_01_oven",
+    "label": "oven",
+    "original_label": "oven",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.36,
+      "y": 3.75,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.3921,
+    "first_seen": 1785351091.962814,
+    "last_seen": 1785351093.5781405
+  },
+  "threat_phone_01_bird": {
+    "object_id": "threat_phone_01_bird",
+    "label": "bird",
+    "original_label": "bird",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -1.93,
+      "y": 5.99,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.7802,
+    "first_seen": 1785351092.0996766,
+    "last_seen": 1785351245.9910464
+  },
+  "threat_phone_01_book": {
+    "object_id": "threat_phone_01_book",
+    "label": "book",
+    "original_label": "book",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -2.81,
+      "y": 0.49,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.4549,
+    "first_seen": 1785351093.3221242,
+    "last_seen": 1785351350.4109538
+  },
+  "threat_phone_01_bench": {
+    "object_id": "threat_phone_01_bench",
+    "label": "bench",
+    "original_label": "bench",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -1.23,
+      "y": 3.19,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.2562,
+    "first_seen": 1785351095.9423385,
+    "last_seen": 1785351095.9423385
+  },
+  "threat_phone_01_car": {
+    "object_id": "threat_phone_01_car",
+    "label": "car",
+    "original_label": "car",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 4.27,
+      "y": 6.91,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.6848,
+    "first_seen": 1785351105.8512013,
+    "last_seen": 1785351355.9373806
+  },
+  "threat_phone_01_orange": {
+    "object_id": "threat_phone_01_orange",
+    "label": "orange",
+    "original_label": "orange",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.82,
+      "y": 2.4,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.3194,
+    "first_seen": 1785351146.6736164,
+    "last_seen": 1785351246.3141413
+  },
+  "threat_phone_01_banana": {
+    "object_id": "threat_phone_01_banana",
+    "label": "banana",
+    "original_label": "banana",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.95,
+      "y": 0.17,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.3223,
+    "first_seen": 1785351146.6766522,
+    "last_seen": 1785351152.6479611
+  },
+  "threat_phone_01_chair": {
+    "object_id": "threat_phone_01_chair",
+    "label": "chair",
+    "original_label": "chair",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.61,
+      "y": 1.12,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.3831,
+    "first_seen": 1785351146.7962866,
+    "last_seen": 1785351153.4639835
+  },
+  "threat_phone_01_pizza": {
+    "object_id": "threat_phone_01_pizza",
+    "label": "pizza",
+    "original_label": "pizza",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -2.78,
+      "y": 1.74,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.8276,
+    "first_seen": 1785351148.5708,
+    "last_seen": 1785351274.3182018
+  },
+  "threat_phone_01_bed": {
+    "object_id": "threat_phone_01_bed",
+    "label": "bed",
+    "original_label": "bed",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -2.41,
+      "y": 0.68,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.6198,
+    "first_seen": 1785351150.8001335,
+    "last_seen": 1785351264.707644
+  },
+  "threat_phone_01_cake": {
+    "object_id": "threat_phone_01_cake",
+    "label": "cake",
+    "original_label": "cake",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -3.18,
+      "y": 1.02,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.2971,
+    "first_seen": 1785351151.5607326,
+    "last_seen": 1785351265.9550989
+  },
+  "threat_phone_01_umbrella": {
+    "object_id": "threat_phone_01_umbrella",
+    "label": "umbrella",
+    "original_label": "umbrella",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -1.62,
+      "y": 1.55,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.3468,
+    "first_seen": 1785351154.1982818,
+    "last_seen": 1785351347.1668305
+  },
+  "threat_phone_01_airplane": {
+    "object_id": "threat_phone_01_airplane",
+    "label": "airplane",
+    "original_label": "airplane",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -1.5,
+      "y": 1.59,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.8723,
+    "first_seen": 1785351154.4938152,
+    "last_seen": 1785351355.4061594
+  },
+  "threat_phone_01_skis": {
+    "object_id": "threat_phone_01_skis",
+    "label": "skis",
+    "original_label": "skis",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 2.22,
+      "y": -0.82,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.4181,
+    "first_seen": 1785351170.200597,
+    "last_seen": 1785351179.1970496
+  },
+  "threat_phone_01_mouse": {
+    "object_id": "threat_phone_01_mouse",
+    "label": "mouse",
+    "original_label": "mouse",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.29,
+      "y": 0.59,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.2667,
+    "first_seen": 1785351188.215311,
+    "last_seen": 1785351188.215311
+  },
+  "threat_phone_01_keyboard": {
+    "object_id": "threat_phone_01_keyboard",
+    "label": "keyboard",
+    "original_label": "keyboard",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.16,
+      "y": 0.48,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.641,
+    "first_seen": 1785351239.6806164,
+    "last_seen": 1785351358.5239766
+  },
+  "threat_phone_01_motorcycle": {
+    "object_id": "threat_phone_01_motorcycle",
+    "label": "motorcycle",
+    "original_label": "motorcycle",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -3.05,
+      "y": 1.68,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.3321,
+    "first_seen": 1785351257.5198555,
+    "last_seen": 1785351261.5620408
+  },
+  "threat_phone_01_surfboard": {
+    "object_id": "threat_phone_01_surfboard",
+    "label": "surfboard",
+    "original_label": "surfboard",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -1.03,
+      "y": 1.18,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.5207,
+    "first_seen": 1785351264.7118547,
+    "last_seen": 1785351274.773622
+  },
+  "threat_phone_01_hot dog": {
+    "object_id": "threat_phone_01_hot dog",
+    "label": "hot dog",
+    "original_label": "hot dog",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 1.15,
+      "y": 2.14,
+      "z": 0.0
+    },
+    "detected_by": "phone_01",
+    "confidence": 0.4043,
+    "first_seen": 1785351355.682635,
+    "last_seen": 1785351355.682635
+  }
+}

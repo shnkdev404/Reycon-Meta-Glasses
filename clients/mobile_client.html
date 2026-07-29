@@ -237,6 +237,34 @@
 
         .btn-primary:active { transform: scale(0.98); }
 
+        .chip-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.76rem;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip-btn:hover, .chip-btn:active {
+            background: rgba(0, 242, 254, 0.25);
+            border-color: var(--accent-cyan);
+            color: #fff;
+        }
+
+        .nudge-btn {
+            background: rgba(0, 242, 254, 0.12);
+            border: 1px solid rgba(0, 242, 254, 0.3);
+            color: var(--accent-cyan);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
         .btn-danger {
             background: rgba(255, 23, 68, 0.25);
             color: var(--accent-red);
@@ -470,8 +498,44 @@
                     <input type="text" id="laptopIp" placeholder="e.g. 192.168.225.62">
                 </div>
                 <div class="form-group">
-                    <label for="glassId">Device ID</label>
+                    <label for="glassId">Device Name / ID</label>
                     <input type="text" id="glassId" value="phone_01" placeholder="e.g. phone_01">
+                    <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+                        <button type="button" class="chip-btn" onclick="setDeviceId('phone_01')">phone_01</button>
+                        <button type="button" class="chip-btn" onclick="setDeviceId('Priyam')">Priyam</button>
+                        <button type="button" class="chip-btn" onclick="setDeviceId('Susu')">Susu</button>
+                    </div>
+                </div>
+            </div>
+            <div class="form-grid" style="margin-top: 10px;">
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <label for="posX" style="margin-bottom:0;">Room Pos X (meters)</label>
+                        <div>
+                            <button type="button" class="nudge-btn" onclick="nudgePos('x', -0.5)">-0.5m</button>
+                            <button type="button" class="nudge-btn" onclick="nudgePos('x', 0.5)">+0.5m</button>
+                        </div>
+                    </div>
+                    <input type="number" id="posX" step="0.5" value="0.0" placeholder="0.0">
+                </div>
+                <div class="form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <label for="posY" style="margin-bottom:0;">Room Pos Y (meters)</label>
+                        <div>
+                            <button type="button" class="nudge-btn" onclick="nudgePos('y', -0.5)">-0.5m</button>
+                            <button type="button" class="nudge-btn" onclick="nudgePos('y', 0.5)">+0.5m</button>
+                        </div>
+                    </div>
+                    <input type="number" id="posY" step="0.5" value="0.0" placeholder="0.0">
+                </div>
+            </div>
+            <div style="margin-top: 8px;">
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Quick Room Separation Presets:</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button type="button" class="chip-btn" onclick="setDevicePreset('phone_01', 0.0, 0.0)">Origin (0, 0)</button>
+                    <button type="button" class="chip-btn" onclick="setDevicePreset('Priyam', 1.5, 0.0)">East (+1.5m, 0)</button>
+                    <button type="button" class="chip-btn" onclick="setDevicePreset('Susu', -1.5, 0.0)">West (-1.5m, 0)</button>
+                    <button type="button" class="chip-btn" onclick="setDevicePreset('Priyam', 0.0, 2.0)">North (0, +2m)</button>
                 </div>
             </div>
             <div class="btn-group">
@@ -483,6 +547,7 @@
                 </button>
             </div>
         </div>
+
 
         <!-- Real-Time GPS Location Coordinates Pill -->
         <div class="gps-pill">
@@ -580,6 +645,27 @@
         let sonarPulseRadius = 0;
         let maxRadarRangeMeters = 30.0;
         let eventLogs = [];
+
+        function setDeviceId(id) {
+            const el = document.getElementById('glassId');
+            if (el) el.value = id;
+        }
+
+        function setDevicePreset(id, x, y) {
+            setDeviceId(id);
+            const posX = document.getElementById('posX');
+            const posY = document.getElementById('posY');
+            if (posX) posX.value = x.toFixed(1);
+            if (posY) posY.value = y.toFixed(1);
+        }
+
+        function nudgePos(axis, delta) {
+            const el = document.getElementById(axis === 'x' ? 'posX' : 'posY');
+            if (el) {
+                let val = parseFloat(el.value || 0.0) + delta;
+                el.value = val.toFixed(1);
+            }
+        }
 
         const video = document.getElementById('webcam');
         const captureCanvas = document.getElementById('captureCanvas');
@@ -802,6 +888,9 @@
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
             const glassId = document.getElementById('glassId').value.trim() || 'phone_01';
+            const posX = parseFloat(document.getElementById('posX')?.value || 0.0);
+            const posY = parseFloat(document.getElementById('posY')?.value || 0.0);
+
             captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
             const base64Frame = captureCanvas.toDataURL('image/jpeg', 0.6);
 
@@ -810,12 +899,13 @@
                 heading: currentHeading,
                 gps: currentGPS,
                 frame: base64Frame,
-                position: { x: 0.0, y: 0.0, z: 0.0 }
+                position: { x: posX, y: posY, z: 0.0 }
             };
 
             ws.send(JSON.stringify(payload));
             frameCount++;
         }
+
 
         function handleServerMessage(data) {
             const alertPanel = document.getElementById('alertPanel');
@@ -870,50 +960,57 @@
 
             if (activeDetections && activeDetections.length > 0) {
                 activeDetections.forEach(det => {
-                    if (!det.bbox || det.bbox.length < 4) return;
+                    try {
+                        if (!det.bbox || det.bbox.length < 4) return;
 
-                    // Scale downscaled 320x240 frame bbox coordinates to 640x480 AR overlay canvas
-                    const scaleX = arCanvas.width / 320.0;
-                    const scaleY = arCanvas.height / 240.0;
+                        // Scale downscaled 320x240 frame bbox coordinates to 640x480 AR overlay canvas
+                        const scaleX = arCanvas.width / 320.0;
+                        const scaleY = arCanvas.height / 240.0;
 
-                    const x1 = det.bbox[0] * scaleX;
-                    const y1 = det.bbox[1] * scaleY;
-                    const x2 = det.bbox[2] * scaleX;
-                    const y2 = det.bbox[3] * scaleY;
-                    const w = x2 - x1;
-                    const h = y2 - y1;
+                        const x1 = det.bbox[0] * scaleX;
+                        const y1 = det.bbox[1] * scaleY;
+                        const x2 = det.bbox[2] * scaleX;
+                        const y2 = det.bbox[3] * scaleY;
+                        const w = x2 - x1;
+                        const h = y2 - y1;
 
-                    const color = det.class_name.toLowerCase() === 'person' ? '#00e676' : '#00f2fe';
+                        const objName = (det.class_name || det.label || det.object_type || 'hazard').toString();
+                        const color = objName.toLowerCase() === 'person' ? '#00e676' : '#00f2fe';
 
-                    // 1. Draw Glowing Target Bounding Box
-                    arCtx.strokeStyle = color;
-                    arCtx.lineWidth = 2.5;
-                    arCtx.shadowColor = color;
-                    arCtx.shadowBlur = 12;
+                        // 1. Draw Glowing Target Bounding Box
+                        arCtx.strokeStyle = color;
+                        arCtx.lineWidth = 2.5;
+                        arCtx.shadowColor = color;
+                        arCtx.shadowBlur = 12;
 
-                    // Corner brackets styling
-                    const cornerLen = Math.min(w, h) * 0.25;
-                    arCtx.beginPath();
-                    // Top-Left
-                    arCtx.moveTo(x1, y1 + cornerLen); arCtx.lineTo(x1, y1); arCtx.lineTo(x1 + cornerLen, y1);
-                    // Top-Right
-                    arCtx.moveTo(x2 - cornerLen, y1); arCtx.lineTo(x2, y1); arCtx.lineTo(x2, y1 + cornerLen);
-                    // Bottom-Right
-                    arCtx.moveTo(x2, y2 - cornerLen); arCtx.lineTo(x2, y2); arCtx.lineTo(x2 - cornerLen, y2);
-                    // Bottom-Left
-                    arCtx.moveTo(x1 + cornerLen, y2); arCtx.lineTo(x1, y2); arCtx.lineTo(x1, y2 - cornerLen);
-                    arCtx.stroke();
+                        // Corner brackets styling
+                        const cornerLen = Math.min(w, h) * 0.25;
+                        arCtx.beginPath();
+                        // Top-Left
+                        arCtx.moveTo(x1, y1 + cornerLen); arCtx.lineTo(x1, y1); arCtx.lineTo(x1 + cornerLen, y1);
+                        // Top-Right
+                        arCtx.moveTo(x2 - cornerLen, y1); arCtx.lineTo(x2, y1); arCtx.lineTo(x2, y1 + cornerLen);
+                        // Bottom-Right
+                        arCtx.moveTo(x2, y2 - cornerLen); arCtx.lineTo(x2, y2); arCtx.lineTo(x2 - cornerLen, y2);
+                        // Bottom-Left
+                        arCtx.moveTo(x1 + cornerLen, y2); arCtx.lineTo(x1, y2); arCtx.lineTo(x1, y2 - cornerLen);
+                        arCtx.stroke();
 
-                    // 2. Draw Target Label Tag
-                    arCtx.fillStyle = color;
-                    arCtx.shadowBlur = 0;
-                    arCtx.font = 'bold 13px "JetBrains Mono"';
-                    const tagText = `${det.class_name.toUpperCase()} ${Math.round(det.confidence * 100)}% [${det.direction}]`;
-                    const textWidth = arCtx.measureText(tagText).width;
+                        // 2. Draw Target Label Tag
+                        arCtx.fillStyle = color;
+                        arCtx.shadowBlur = 0;
+                        arCtx.font = 'bold 13px "JetBrains Mono"';
+                        const confPct = Math.round((det.confidence || 0.9) * 100);
+                        const dirStr = det.direction || 'FRONT';
+                        const tagText = `${objName.toUpperCase()} ${confPct}% [${dirStr}]`;
+                        const textWidth = arCtx.measureText(tagText).width;
 
-                    arCtx.fillRect(x1, y1 - 22, textWidth + 12, 20);
-                    arCtx.fillStyle = '#000';
-                    arCtx.fillText(tagText, x1 + 6, y1 - 7);
+                        arCtx.fillRect(x1, y1 - 22, textWidth + 12, 20);
+                        arCtx.fillStyle = '#000';
+                        arCtx.fillText(tagText, x1 + 6, y1 - 7);
+                    } catch (e) {
+                        console.error("Error drawing AR detection box:", e);
+                    }
                 });
             }
 

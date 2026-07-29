@@ -1,6 +1,10 @@
 """
 Automated unit and integration tests for Phase 11: Real-time Debug Dashboard Visualizer & REST APIs.
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import asyncio
 from app.api.routes import home, health, get_world_state, get_glasses, get_threats
 from app.dashboard.visualizer import render_dashboard
@@ -35,7 +39,7 @@ def test_dashboard_visualizer_endpoint():
     response = asyncio.run(render_dashboard())
     html_text = response.body.decode("utf-8")
     assert "<canvas id=\"radarCanvas\"></canvas>" in html_text
-    assert "Shared Perception Stack Dashboard" in html_text
+    assert "Server Command Center" in html_text
     print("✅ Dashboard Visualizer HTML Endpoint passed!")
 
 

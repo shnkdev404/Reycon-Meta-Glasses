@@ -1,6 +1,10 @@
 """
 Automated unit and integration tests for Phase 3: Vision & Multi-Object Tracking.
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import time
 from datetime import datetime, timedelta
 from app.vision.detector import YOLOWrapper

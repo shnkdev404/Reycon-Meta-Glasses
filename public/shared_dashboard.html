@@ -446,28 +446,57 @@
     <!-- Main Workspace Layout -->
     <div class="gh-container">
         
-        <!-- Left Panel: 3D Spatial Radar Viewport -->
-        <div class="gh-box">
-            <div class="gh-box-header">
-                <div class="gh-box-title">
-                    <svg height="16" viewBox="0 0 16 16" width="16" fill="var(--color-accent-fg)"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"></path></svg>
-                    Collaborative Perception Radar Viewport
+        <!-- Left Panel: 3D Spatial Radar Viewport & Tables -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="gh-box">
+                <div class="gh-box-header">
+                    <div class="gh-box-title">
+                        <svg height="16" viewBox="0 0 16 16" width="16" fill="var(--color-accent-fg)"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"></path></svg>
+                        Collaborative Perception Radar & Persistent Memory Layer
+                    </div>
+                    <div class="legend-bar">
+                        <div class="legend-tag"><span class="tag-square" style="background:#3fb950;"></span> Phone Device</div>
+                        <div class="legend-tag"><span class="tag-square" style="background:#d29922;"></span> Memory Object</div>
+                        <div class="legend-tag"><span class="tag-circle"></span> Threat Hazard</div>
+                        <div class="legend-tag"><span class="tag-dash"></span> Collab Link</div>
+                    </div>
                 </div>
-                <div class="legend-bar">
-                    <div class="legend-tag"><span class="tag-square"></span> Glass Device</div>
-                    <div class="legend-tag"><span class="tag-circle"></span> Threat Hazard</div>
-                    <div class="legend-tag"><span class="tag-dash"></span> Collab Link</div>
-                    <div class="legend-tag"><span class="tag-dot"></span> Landmark</div>
+                <div class="gh-box-body" style="padding: 12px;">
+                    <div class="radar-wrapper">
+                        <canvas id="radarCanvas"></canvas>
+                        <div class="radar-controls-overlay">
+                            <button class="btn btn-sm" onclick="zoomIn()">Zoom +</button>
+                            <button class="btn btn-sm" onclick="zoomOut()">Zoom -</button>
+                            <button class="btn btn-sm" onclick="resetZoom()">Center</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="gh-box-body" style="padding: 12px;">
-                <div class="radar-wrapper">
-                    <canvas id="radarCanvas"></canvas>
-                    <div class="radar-controls-overlay">
-                        <button class="btn btn-sm" onclick="zoomIn()">Zoom +</button>
-                        <button class="btn btn-sm" onclick="zoomOut()">Zoom -</button>
-                        <button class="btn btn-sm" onclick="resetZoom()">Center</button>
+
+            <!-- Persistent Memory Store & Real-Time Classification Correction Table -->
+            <div class="gh-box">
+                <div class="gh-box-header">
+                    <div class="gh-box-title">
+                        💾 Persistent Memory Store (Recorded Objects & Positions)
                     </div>
+                    <span style="font-size: 0.75rem; color: var(--color-attention-fg);">Real-Time Classification Correction</span>
+                </div>
+                <div class="gh-box-body" style="overflow-x: auto; padding: 12px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem; font-family: var(--font-mono);">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--color-border-default); background: rgba(22, 27, 34, 0.8);">
+                                <th style="padding: 8px; text-align: left; color: var(--color-fg-muted);">OBJECT ID</th>
+                                <th style="padding: 8px; text-align: left; color: var(--color-fg-muted);">LABEL / CLASS</th>
+                                <th style="padding: 8px; text-align: left; color: var(--color-fg-muted);">EXACT 3D POSITION (X, Y, Z)</th>
+                                <th style="padding: 8px; text-align: left; color: var(--color-fg-muted);">DETECTED BY</th>
+                                <th style="padding: 8px; text-align: left; color: var(--color-fg-muted);">CONFIDENCE</th>
+                                <th style="padding: 8px; text-align: left; color: var(--color-fg-muted);">ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="persistentMemoryTable">
+                            <tr><td colspan="6" style="padding: 12px; text-align: center; color: var(--color-fg-muted);">Loading persistent memory store...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -486,8 +515,12 @@
                 <div class="gh-box-body">
                     <div class="stats-summary">
                         <div class="stat-card">
-                            <div class="label">GLASSES <span style="color: var(--color-success-fg);">●</span></div>
+                            <div class="label">PHONES <span style="color: var(--color-success-fg);">●</span></div>
                             <div class="value" id="statGlasses" style="color: var(--color-success-fg);">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">MEMORY OBJS</div>
+                            <div class="value" id="statMemoryObjs" style="color: var(--color-attention-fg);">0</div>
                         </div>
                         <div class="stat-card">
                             <div class="label">HAZARDS <span style="color: var(--color-danger-fg);">●</span></div>
@@ -496,10 +529,6 @@
                         <div class="stat-card">
                             <div class="label">LANDMARKS</div>
                             <div class="value" id="statMapPoints" style="color: var(--color-fg-muted);">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="label">KEYFRAMES</div>
-                            <div class="value" id="statKeyframes" style="color: var(--color-accent-fg);">0</div>
                         </div>
                     </div>
 
@@ -514,7 +543,28 @@
                 </div>
             </div>
 
-            <!-- Activity Stream (GitHub Commit Feed Format) -->
+            <!-- Connected Phones Matrix Panel -->
+            <div class="gh-box">
+                <div class="gh-box-header">
+                    <div class="gh-box-title">📱 Connected Phones & Devices Locations</div>
+                </div>
+                <div class="gh-box-body" style="padding: 12px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem; font-family: var(--font-mono);">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--color-border-default);">
+                                <th style="padding: 6px; text-align: left; color: var(--color-fg-muted);">PHONE ID</th>
+                                <th style="padding: 6px; text-align: left; color: var(--color-fg-muted);">EXACT POSITION (X, Y, Z)</th>
+                                <th style="padding: 6px; text-align: left; color: var(--color-fg-muted);">HEADING</th>
+                            </tr>
+                        </thead>
+                        <tbody id="connectedPhonesTable">
+                            <tr><td colspan="3" style="padding: 8px; text-align: center; color: var(--color-fg-muted);">No active phones connected</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Activity Stream -->
             <div class="gh-box" style="flex: 1;">
                 <div class="gh-box-header">
                     <div class="gh-box-title">
@@ -578,15 +628,99 @@
         }
 
         function updateUI() {
-            const glassCount = Object.keys(worldData.glasses).length;
+            const glassesDict = worldData.glasses || {};
+            const glassList = Object.values(glassesDict);
+            const glassCount = glassList.length;
+            const memoryObjs = worldData.persistent_objects || [];
+
             document.getElementById('statGlasses').innerText = glassCount;
             document.getElementById('tabGlassesCount').innerText = glassCount;
+            document.getElementById('statMemoryObjs').innerText = memoryObjs.length;
             document.getElementById('statThreats').innerText = worldData.threats.length;
             document.getElementById('statMapPoints').innerText = worldData.map_points.length;
-            document.getElementById('statKeyframes').innerText = (worldData.stats && worldData.stats.total_keyframes) || 0;
 
+            renderConnectedPhonesTable(glassesDict);
+            renderPersistentMemoryTable(memoryObjs);
             drawRadar();
             updateTimeline();
+        }
+
+        function renderConnectedPhonesTable(glasses) {
+            const tbody = document.getElementById('connectedPhonesTable');
+            const keys = Object.keys(glasses);
+            if (keys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="padding: 8px; text-align: center; color: var(--color-fg-muted);">No active phones connected</td></tr>';
+                return;
+            }
+
+            let html = '';
+            keys.forEach(gid => {
+                const g = glasses[gid];
+                const pos = g.position || {x:0, y:0, z:0};
+                const posStr = g.formatted_position || `X: ${(pos.x||0).toFixed(2)}m, Y: ${(pos.y||0).toFixed(2)}m, Z: ${(pos.z||0).toFixed(2)}m`;
+                html += `
+                    <tr style="border-bottom: 1px solid var(--color-border-muted);">
+                        <td style="padding: 6px; color: var(--color-success-fg); font-weight: 600;">📱 ${gid}</td>
+                        <td style="padding: 6px;">${posStr}</td>
+                        <td style="padding: 6px;">${Math.round(g.heading || 0)}°</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderPersistentMemoryTable(memoryObjs) {
+            const tbody = document.getElementById('persistentMemoryTable');
+            if (!memoryObjs || memoryObjs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 12px; text-align: center; color: var(--color-fg-muted);">No objects recorded in persistent memory store</td></tr>';
+                return;
+            }
+
+            let html = '';
+            memoryObjs.forEach(obj => {
+                const pos = obj.position || {x:0, y:0, z:0};
+                const posStr = `X: ${(pos.x||0).toFixed(2)}m, Y: ${(pos.y||0).toFixed(2)}m, Z: ${(pos.z||0).toFixed(2)}m`;
+                const isCorrected = obj.is_corrected;
+                const labelDisplay = isCorrected 
+                    ? `<span style="color: var(--color-attention-fg); font-weight: 700;">${obj.label}</span> <span style="background: rgba(210,153,34,0.15); color: var(--color-attention-fg); border: 1px solid rgba(210,153,34,0.3); padding: 1px 4px; border-radius: 4px; font-size: 0.65rem;">CORRECTED</span>` 
+                    : `<span style="color: var(--color-accent-fg); font-weight: 600;">${obj.label}</span>`;
+
+                html += `
+                    <tr style="border-bottom: 1px solid var(--color-border-muted);">
+                        <td style="padding: 6px; color: var(--color-fg-muted);">${obj.object_id}</td>
+                        <td style="padding: 6px;">${labelDisplay}</td>
+                        <td style="padding: 6px;">${posStr}</td>
+                        <td style="padding: 6px;">📱 ${obj.detected_by || 'system'}</td>
+                        <td style="padding: 6px;">${Math.round((obj.confidence || 0.85) * 100)}%</td>
+                        <td style="padding: 6px;">
+                            <button class="btn btn-sm" style="background: rgba(210,153,34,0.2); color: var(--color-attention-fg); border-color: rgba(210,153,34,0.4);" onclick="correctObjectPrompt('${obj.object_id}', '${obj.label}')">✏️ Correct Label</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function correctObjectPrompt(objectId, currentLabel) {
+            const newLabel = prompt(`Correct misclassified object label for '${objectId}':\nCurrent Label: ${currentLabel}`, currentLabel);
+            if (!newLabel || newLabel.trim() === '' || newLabel.trim() === currentLabel) return;
+
+            try {
+                const res = await fetch('/api/shared/correct_object', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ object_id: objectId, new_label: newLabel.trim() })
+                });
+                const resData = await res.json();
+                if (resData.status === 'success') {
+                    alert(`✅ Object '${objectId}' label corrected to '${newLabel.trim()}' across all clients & disk memory.`);
+                    fetchWorldState();
+                } else {
+                    alert(`❌ Error correcting object label: ${resData.detail || resData.message}`);
+                }
+            } catch(e) {
+                alert(`❌ Request error: ${e}`);
+            }
         }
 
         function drawRadar() {
@@ -667,7 +801,27 @@
                 ctx.fillText(text, labelX + padding, labelY + 12);
             }
 
-            // 1. Render SLAM Landmark Points (Gray Dots)
+            // 1. Render Persistent Memory Store Objects (Amber/Gold Diamonds)
+            const memoryObjs = worldData.persistent_objects || [];
+            memoryObjs.forEach(m => {
+                const pos = m.position || {x:0, y:0, z:0};
+                const mx = centerX + (pos.x * zoomScale);
+                const my = centerY - (pos.y * zoomScale);
+
+                ctx.fillStyle = '#d29922';
+                ctx.beginPath();
+                ctx.moveTo(mx, my - 6);
+                ctx.lineTo(mx + 6, my);
+                ctx.lineTo(mx, my + 6);
+                ctx.lineTo(mx - 6, my);
+                ctx.closePath();
+                ctx.fill();
+
+                const lbl = m.is_corrected ? `💾 ${m.label} [EDITED]` : `💾 ${m.label}`;
+                drawSmartLabel(`${lbl} (X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m)`, mx, my, '#d29922', false);
+            });
+
+            // 2. Render SLAM Landmark Points (Gray Dots)
             ctx.fillStyle = '#8b949e';
             worldData.map_points.forEach(pt => {
                 const pos = pt.position || pt;
@@ -678,7 +832,7 @@
                 ctx.fill();
             });
 
-            // 2. Render Collaboration Links (Dashed Cyan Lines between glasses < 50m)
+            // 3. Render Collaboration Links (Dashed Cyan Lines between glasses < 50m)
             const glassList = Object.values(worldData.glasses);
             ctx.strokeStyle = '#58a6ff';
             ctx.setLineDash([4, 4]);
@@ -700,11 +854,20 @@
             }
             ctx.setLineDash([]);
 
-            // 3. Render Glass Devices (Green Squares with Vision Cone FOV & Looking Direction)
-            glassList.forEach(g => {
-                const pos = g.position;
-                const gx = centerX + (pos.x * zoomScale);
-                const gy = centerY - (pos.y * zoomScale);
+            // 4. Render Glass Devices (Green Squares with Vision Cone FOV & Looking Direction)
+            glassList.forEach((g, idx) => {
+                const pos = g.position || {x:0, y:0, z:0};
+                let gx = centerX + (pos.x * zoomScale);
+                let gy = centerY - (pos.y * zoomScale);
+
+                // Offset overlapping icons if multiple glasses share exact same spot
+                const overlappingCount = glassList.filter((og, oidx) => oidx < idx && Math.abs((og.position?.x||0) - pos.x) < 0.1 && Math.abs((og.position?.y||0) - pos.y) < 0.1).length;
+                if (overlappingCount > 0) {
+                    const angle = (overlappingCount * 120) * Math.PI / 180;
+                    gx += Math.cos(angle) * 18;
+                    gy += Math.sin(angle) * 18;
+                }
+
                 const headingDeg = g.heading || 0;
                 // Convert compass heading to canvas angle (0 deg = UP/North)
                 const headingRad = (headingDeg - 90) * Math.PI / 180;
@@ -727,7 +890,6 @@
                 const arrowLength = 26;
                 const tipX = gx + arrowLength * Math.cos(headingRad);
                 const tipY = gy + arrowLength * Math.sin(headingRad);
-
                 ctx.strokeStyle = '#3fb950';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -735,8 +897,6 @@
                 ctx.lineTo(tipX, tipY);
                 ctx.stroke();
 
-                // Small arrowhead
-                const headLen = 6;
                 ctx.fillStyle = '#3fb950';
                 ctx.beginPath();
                 ctx.arc(tipX, tipY, 3, 0, Math.PI * 2);
@@ -749,14 +909,15 @@
                 ctx.lineWidth = 1;
                 ctx.strokeRect(gx - 6, gy - 6, 12, 12);
 
-                const labelStr = `🕶️ ${g.id} (${Math.round(headingDeg)}°)`;
+                const posStr = g.formatted_position || `X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m`;
+                const labelStr = `📱 Phone: ${g.id} (${posStr})`;
                 drawSmartLabel(labelStr, gx, gy, '#3fb950', false);
             });
 
-            // 4. Render Active Threats (Red Pulsing Circles) - Deduplicate duplicate threat entries
-            const activeThreats = (worldData.threats || []).slice(-15); // Show top 15 active/recent threats
+            // 5. Render Active Threats (Red Pulsing Circles)
+            const activeThreats = (worldData.threats || []).slice(-15);
             activeThreats.forEach(th => {
-                const pos = th.position;
+                const pos = th.position || {x:0, y:0, z:0};
                 const tx = centerX + (pos.x * zoomScale);
                 const ty = centerY - (pos.y * zoomScale);
 
@@ -772,7 +933,7 @@
                 ctx.arc(tx, ty, 6, 0, Math.PI * 2);
                 ctx.fill();
 
-                const labelStr = `🚨 ${th.type} (${th.detected_by || 'shared'})`;
+                const labelStr = `🚨 ${th.type || th.class_name || 'hazard'} (${th.detected_by || th.glass_id || 'shared'})`;
                 drawSmartLabel(labelStr, tx, ty, '#f85149', true);
             });
         }
@@ -781,7 +942,10 @@
             const container = document.getElementById('eventTimeline');
             let html = '';
 
-            if (worldData.threats.length === 0 && Object.keys(worldData.glasses).length === 0) {
+            const threats = worldData.threats || [];
+            const glasses = worldData.glasses || {};
+
+            if (threats.length === 0 && Object.keys(glasses).length === 0) {
                 html = `
                     <div class="timeline-item">
                         <div class="timeline-icon icon-info">i</div>
@@ -791,24 +955,26 @@
                         </div>
                     </div>`;
             } else {
-                worldData.threats.forEach(t => {
+                threats.slice(-10).forEach(t => {
+                    const pos = t.position || {x:0, y:0};
                     html += `
                         <div class="timeline-item">
                             <div class="timeline-icon icon-alert">🚨</div>
                             <div class="timeline-content">
-                                <div class="timeline-title">Hazard Detected: <strong>${t.type}</strong></div>
-                                <div class="timeline-meta">Detected by ${t.detected_by || 'system'} at (${t.position.x}m, ${t.position.y}m)</div>
+                                <div class="timeline-title">Hazard Detected: <strong>${t.type || t.class_name || 'threat'}</strong></div>
+                                <div class="timeline-meta">Detected by ${t.detected_by || t.glass_id || 'system'} at (${(pos.x||0).toFixed(1)}m, ${(pos.y||0).toFixed(1)}m)</div>
                             </div>
                         </div>`;
                 });
 
-                Object.values(worldData.glasses).forEach(g => {
+                Object.values(glasses).forEach(g => {
+                    const pos = g.position || {x:0, y:0};
                     html += `
                         <div class="timeline-item">
-                            <div class="timeline-icon icon-success">🕶️</div>
+                            <div class="timeline-icon icon-success">📱</div>
                             <div class="timeline-content">
-                                <div class="timeline-title">Glass Connected: <strong>${g.id}</strong></div>
-                                <div class="timeline-meta">Pose synced at (${g.position.x}m, ${g.position.y}m)</div>
+                                <div class="timeline-title">Phone Connected: <strong>${g.id}</strong></div>
+                                <div class="timeline-meta">Position: (${(pos.x||0).toFixed(1)}m, ${(pos.y||0).toFixed(1)}m) | Heading: ${Math.round(g.heading||0)}°</div>
                             </div>
                         </div>`;
                 });
@@ -817,38 +983,58 @@
             container.innerHTML = html;
         }
 
+        let activeSimSockets = [];
+
         async function simulateGlassesDemo() {
-            const wsA = new WebSocket(`ws://${location.host}/ws/glass/glass_a`);
-            const wsB = new WebSocket(`ws://${location.host}/ws/glass/glass_b`);
+            closeSimSockets();
+            const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrlA = `${wsProtocol}//${location.host}/ws/mobile`;
+            const wsUrlB = `${wsProtocol}//${location.host}/ws/mobile`;
 
-            wsA.onopen = () => {
-                wsA.send(JSON.stringify({
-                    type: "telemetry",
-                    position: { x: -8, y: 12, z: 0 },
-                    map_points: [
-                        { point_id: "lm_1", position: { x: -10, y: 15, z: 0 } },
-                        { point_id: "lm_2", position: { x: -6, y: 10, z: 0 } }
-                    ]
-                }));
-            };
+            try {
+                const wsA = new WebSocket(wsUrlA);
+                const wsB = new WebSocket(wsUrlB);
+                activeSimSockets.push(wsA, wsB);
 
-            wsB.onopen = () => {
-                wsB.send(JSON.stringify({
-                    type: "telemetry",
-                    position: { x: 12, y: 16, z: 0 },
-                    detections: [
-                        { object_type: "truck", position: { x: 15, y: 20, z: 0 }, confidence: 0.95 }
-                    ],
-                    map_points: [
-                        { point_id: "lm_3", position: { x: 16, y: 18, z: 0 } }
-                    ]
-                }));
-            };
+                wsA.onopen = () => {
+                    console.log("📱 [Sim] Phone Alpha WebSocket connected");
+                    wsA.send(JSON.stringify({
+                        glass_id: "phone_alpha",
+                        heading: 45.0,
+                        position: { x: -8.5, y: 12.0, z: 0.0 },
+                        detections: [
+                            { label: "forklift", confidence: 0.94, distance: 6.0, direction: "FRONT" }
+                        ]
+                    }));
+                };
 
-            setTimeout(fetchWorldState, 500);
+                wsB.onopen = () => {
+                    console.log("📱 [Sim] Phone Beta WebSocket connected");
+                    wsB.send(JSON.stringify({
+                        glass_id: "phone_beta",
+                        heading: 180.0,
+                        position: { x: 12.0, y: -6.5, z: 0.0 },
+                        detections: [
+                            { label: "truck", confidence: 0.91, distance: 4.5, direction: "FRONT" }
+                        ]
+                    }));
+                };
+
+                setTimeout(fetchWorldState, 600);
+            } catch(e) {
+                console.error("Simulation error:", e);
+            }
+        }
+
+        function closeSimSockets() {
+            activeSimSockets.forEach(ws => {
+                try { ws.close(); } catch(e){}
+            });
+            activeSimSockets = [];
         }
 
         async function resetServerState() {
+            closeSimSockets();
             await fetch('/api/shared/reset', { method: 'POST' });
             fetchWorldState();
         }

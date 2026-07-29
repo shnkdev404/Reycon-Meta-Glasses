@@ -40,8 +40,12 @@ class ThreatPredictionEngine:
             label = obj.label.lower()
             clean_label = label.split(" #")[0].strip()
             
+            # Exclude non-hazard objects (office/personal items & people) from hazard threat classification
+            if any(k in clean_label for k in ["person", "human", "laptop", "phone", "chair", "bottle", "cup", "backpack", "keyboard", "mouse"]):
+                continue
+
             # Target hazardous dynamic objects, machinery, and obstacles
-            if not any(k in clean_label for k in ["vehicle", "car", "forklift", "truck", "excavator", "machine", "person", "obstacle", "hazard"]):
+            if not any(k in clean_label for k in ["vehicle", "car", "forklift", "truck", "excavator", "machine", "obstacle", "hazard"]):
                 continue
 
             for glass_id, glass in glasses.items():

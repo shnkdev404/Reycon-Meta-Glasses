@@ -1,6 +1,10 @@
 """
 Automated unit and integration tests for Phase 5: Spatial Geometry & Coordinate Transformation Pipeline.
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from app.models.glass import GlassState, GlassPose
 from app.models.object import Detection2D, BoundingBox2D, WorldObject
 from app.services.geometry import (

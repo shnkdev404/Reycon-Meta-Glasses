@@ -20,6 +20,7 @@
             --color-success-emphasis: #238636;
             --color-danger-fg: #f85149;
             --color-danger-emphasis: #da3633;
+            --color-warning-fg: #d29922;
             --font-mono: 'JetBrains Mono', ui-monospace, monospace;
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
@@ -37,24 +38,32 @@
         .gh-tab { padding: 10px 16px; font-size: 0.88rem; font-weight: 500; color: var(--color-fg-muted); border-bottom: 2px solid transparent; text-decoration: none; display: flex; align-items: center; gap: 8px; }
         .gh-tab.active { color: var(--color-fg-default); border-bottom-color: #f78166; font-weight: 600; }
 
-        .gh-container { max-width: 1440px; width: 100%; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 1fr 380px; gap: 24px; flex: 1; }
+        .gh-container { max-width: 1560px; width: 100%; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 1fr 440px; gap: 24px; flex: 1; }
         .gh-box { background: var(--color-canvas-overlay); border: 1px solid var(--color-border-default); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
         .gh-box-header { background: #161b22; border-bottom: 1px solid var(--color-border-default); padding: 12px 16px; font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
         .gh-box-body { padding: 16px; flex: 1; }
 
         canvas { display: block; width: 100%; height: 520px; background: radial-gradient(circle at center, #161b22 0%, #0d1117 80%); border: 1px solid var(--color-border-default); border-radius: 6px; }
 
-        .btn { background: #21262d; color: #c9d1d9; border: 1px solid var(--color-border-default); padding: 6px 12px; font-size: 0.82rem; font-weight: 500; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); }
+        .btn { background: #21262d; color: #c9d1d9; border: 1px solid var(--color-border-default); padding: 5px 10px; font-size: 0.78rem; font-weight: 500; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); transition: 0.15s ease; }
         .btn:hover { background: #30363d; border-color: #8b949e; }
         .btn-primary { background: var(--color-success-emphasis); color: #fff; border-color: rgba(240,246,252,0.1); }
         .btn-primary:hover { background: #2ea043; }
+        .btn-warning { background: rgba(210, 153, 34, 0.2); color: var(--color-warning-fg); border-color: rgba(210, 153, 34, 0.4); }
+        .btn-warning:hover { background: rgba(210, 153, 34, 0.35); }
 
-        .stats-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
-        .stat-card { background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 6px; padding: 12px; }
-        .stat-card .label { font-size: 0.75rem; color: var(--color-fg-muted); margin-bottom: 4px; }
-        .stat-card .value { font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); }
+        .stats-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+        .stat-card { background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 6px; padding: 10px; }
+        .stat-card .label { font-size: 0.72rem; color: var(--color-fg-muted); margin-bottom: 4px; font-weight: 500; }
+        .stat-card .value { font-size: 1.3rem; font-weight: 700; font-family: var(--font-mono); }
 
-        .code-box { background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 6px; padding: 10px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-accent-fg); overflow-x: auto; max-height: 240px; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; font-family: var(--font-mono); margin-top: 8px; }
+        .data-table th, .data-table td { border-bottom: 1px solid var(--color-border-muted); padding: 8px 10px; text-align: left; }
+        .data-table th { background: rgba(22, 27, 34, 0.8); color: var(--color-fg-muted); font-weight: 600; font-size: 0.72rem; }
+        .data-table tr:hover { background: rgba(110, 118, 129, 0.05); }
+
+        .badge-corrected { background: rgba(210, 153, 34, 0.15); color: var(--color-warning-fg); border: 1px solid rgba(210, 153, 34, 0.3); padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: 600; }
+        .code-box { background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 6px; padding: 10px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--color-accent-fg); overflow-x: auto; max-height: 200px; }
     </style>
 </head>
 <body>
@@ -77,36 +86,86 @@
     </nav>
 
     <div class="gh-container">
-        <div class="gh-box">
-            <div class="gh-box-header">
-                <div>📡 Server Spatial Telemetry Matrix</div>
-                <div style="font-size: 0.78rem; color: var(--color-fg-muted);">● Connected Glasses  ● Hazards  ● SLAM Graph</div>
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="gh-box">
+                <div class="gh-box-header">
+                    <div>📡 Live Spatial Radar & Persistent Map Layer</div>
+                    <div style="font-size: 0.78rem; color: var(--color-fg-muted);">● 📱 Connected Phones  ● 💾 Memory Store Objects  ● 🚨 Hazards</div>
+                </div>
+                <div class="gh-box-body">
+                    <canvas id="radarCanvas"></canvas>
+                </div>
             </div>
-            <div class="gh-box-body">
-                <canvas id="radarCanvas"></canvas>
+
+            <!-- Persistent Object Store & Correction Table -->
+            <div class="gh-box">
+                <div class="gh-box-header">
+                    <div>💾 Persistent Memory Store (Detected Objects & Positions)</div>
+                    <span style="font-size: 0.75rem; color: var(--color-warning-fg);">Real-Time Classification Correction Enabled</span>
+                </div>
+                <div class="gh-box-body" style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>OBJECT ID</th>
+                                <th>LABEL / CLASS</th>
+                                <th>EXACT 3D POSITION (X, Y, Z)</th>
+                                <th>DETECTED BY</th>
+                                <th>CONFIDENCE</th>
+                                <th>ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memoryTableBody">
+                            <tr><td colspan="6" style="text-align: center; color: var(--color-fg-muted);">Loading persistent memory store...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; flex-direction: column; gap: 20px;">
             <div class="gh-box">
-                <div class="gh-box-header">System Metrics & Telemetry</div>
+                <div class="gh-box-header">System Metrics & Devices</div>
                 <div class="gh-box-body">
                     <div class="stats-summary">
                         <div class="stat-card">
-                            <div class="label">GLASSES</div>
+                            <div class="label">PHONES</div>
                             <div class="value" id="sGlasses" style="color: var(--color-success-fg);">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">MEMORY OBJS</div>
+                            <div class="value" id="sMemoryObjs" style="color: var(--color-warning-fg);">0</div>
                         </div>
                         <div class="stat-card">
                             <div class="label">HAZARDS</div>
                             <div class="value" id="sThreats" style="color: var(--color-danger-fg);">0</div>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="pollData()" style="width: 100%; justify-content: center;">🔄 Refresh State</button>
+                    <button class="btn btn-primary" onclick="pollData()" style="width: 100%; justify-content: center;">🔄 Refresh Server State</button>
+                </div>
+            </div>
+
+            <!-- Connected Phones Table -->
+            <div class="gh-box">
+                <div class="gh-box-header">📱 Connected Phones & Glasses Locations</div>
+                <div class="gh-box-body" style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>PHONE / GLASS ID</th>
+                                <th>EXACT POSITION (X, Y, Z)</th>
+                                <th>HEADING</th>
+                            </tr>
+                        </thead>
+                        <tbody id="phonesTableBody">
+                            <tr><td colspan="3" style="text-align: center; color: var(--color-fg-muted);">No phones connected</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
             <div class="gh-box" style="flex: 1;">
-                <div class="gh-box-header">Raw World Model Telemetry Stream</div>
+                <div class="gh-box-header">Raw Telemetry Stream</div>
                 <div class="gh-box-body">
                     <div class="code-box" id="jsonBox">Polling telemetry data...</div>
                 </div>
@@ -129,18 +188,105 @@
             try {
                 const res = await fetch('/api/shared/world_state');
                 const data = await res.json();
-                document.getElementById('sGlasses').innerText = Object.keys(data.glasses || {}).length;
-                document.getElementById('sThreats').innerText = (data.threats || []).length;
+                
+                const glasses = data.glasses || {};
+                const threats = data.threats || [];
+                const memoryObjs = data.persistent_objects || [];
+
+                document.getElementById('sGlasses').innerText = Object.keys(glasses).length;
+                document.getElementById('sMemoryObjs').innerText = memoryObjs.length;
+                document.getElementById('sThreats').innerText = threats.length;
                 document.getElementById('jsonBox').innerText = JSON.stringify(data, null, 2);
+
+                renderPhonesTable(glasses);
+                renderMemoryTable(memoryObjs);
                 draw(data);
             } catch(e) {}
+        }
+
+        function renderPhonesTable(glasses) {
+            const tbody = document.getElementById('phonesTableBody');
+            const keys = Object.keys(glasses);
+            if (keys.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--color-fg-muted);">No active phones/glasses detected</td></tr>';
+                return;
+            }
+
+            let html = '';
+            keys.forEach(gid => {
+                const g = glasses[gid];
+                const pos = g.position || {x:0, y:0, z:0};
+                const formatted = g.formatted_position || `X: ${pos.x.toFixed(2)}m, Y: ${pos.y.toFixed(2)}m, Z: ${(pos.z||0).toFixed(2)}m`;
+                html += `
+                    <tr>
+                        <td style="color: var(--color-success-fg); font-weight: 600;">📱 ${gid}</td>
+                        <td>${formatted}</td>
+                        <td>${Math.round(g.heading || 0)}°</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderMemoryTable(memoryObjs) {
+            const tbody = document.getElementById('memoryTableBody');
+            if (!memoryObjs || memoryObjs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-fg-muted);">No objects recorded in persistent memory store</td></tr>';
+                return;
+            }
+
+            let html = '';
+            memoryObjs.forEach(obj => {
+                const pos = obj.position || {x:0, y:0, z:0};
+                const posStr = `X: ${(pos.x||0).toFixed(2)}m, Y: ${(pos.y||0).toFixed(2)}m, Z: ${(pos.z||0).toFixed(2)}m`;
+                const isCorrected = obj.is_corrected;
+                const labelDisplay = isCorrected 
+                    ? `<span style="color: var(--color-warning-fg); font-weight: 700;">${obj.label}</span> <span class="badge-corrected">CORRECTED</span>` 
+                    : `<span style="color: var(--color-accent-fg); font-weight: 600;">${obj.label}</span>`;
+
+                html += `
+                    <tr>
+                        <td style="color: var(--color-fg-muted);">${obj.object_id}</td>
+                        <td>${labelDisplay}</td>
+                        <td>${posStr}</td>
+                        <td>📱 ${obj.detected_by || 'system'}</td>
+                        <td>${Math.round((obj.confidence || 0.85) * 100)}%</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="correctObjectPrompt('${obj.object_id}', '${obj.label}')">✏️ Correct Label</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function correctObjectPrompt(objectId, currentLabel) {
+            const newLabel = prompt(`Correct misclassified object label for '${objectId}':\nCurrent Label: ${currentLabel}`, currentLabel);
+            if (!newLabel || newLabel.trim() === '' || newLabel.trim() === currentLabel) return;
+
+            try {
+                const res = await fetch('/api/shared/correct_object', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ object_id: objectId, new_label: newLabel.trim() })
+                });
+                const resData = await res.json();
+                if (resData.status === 'success') {
+                    alert(`✅ Object '${objectId}' corrected to '${newLabel.trim()}' across server & mobile clients.`);
+                    pollData();
+                } else {
+                    alert(`❌ Error correcting object: ${resData.detail || resData.message}`);
+                }
+            } catch(e) {
+                alert(`❌ Network error: ${e}`);
+            }
         }
 
         function draw(data) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
-            const s = 12;
+            const s = 14;
 
             ctx.strokeStyle = '#21262d';
             ctx.lineWidth = 1;
@@ -152,10 +298,10 @@
             function drawLabel(text, tx, ty, color) {
                 ctx.font = '600 11px "JetBrains Mono"';
                 const metrics = ctx.measureText(text);
-                const width = metrics.width + 8;
-                const height = 16;
+                const width = metrics.width + 10;
+                const height = 18;
                 let lx = tx + 12;
-                let ly = ty - 8;
+                let ly = ty - 9;
 
                 let attempts = 0;
                 while (attempts < 6) {
@@ -166,13 +312,13 @@
                         }
                     }
                     if (!col) break;
-                    ly += 18;
+                    ly += 20;
                     attempts++;
                 }
 
                 placedLabels.push({ x: lx, y: ly, w: width, h: height });
 
-                ctx.fillStyle = 'rgba(13, 17, 23, 0.9)';
+                ctx.fillStyle = 'rgba(13, 17, 23, 0.92)';
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -181,26 +327,55 @@
                 ctx.stroke();
 
                 ctx.fillStyle = color;
-                ctx.fillText(text, lx + 4, ly + 12);
+                ctx.fillText(text, lx + 5, ly + 13);
             }
 
-            // Render Glasses (Green)
-            Object.values(data.glasses || {}).forEach(g => {
-                const px = cx + (g.position.x * s);
-                const py = cy - (g.position.y * s);
-                ctx.fillStyle = '#3fb950';
-                ctx.fillRect(px - 6, py - 6, 12, 12);
-                drawLabel(`🕶️ ${g.id}`, px, py, '#3fb950');
+            // 1. Render Persistent Memory Objects (Gold Diamonds)
+            const memoryObjs = data.persistent_objects || [];
+            memoryObjs.forEach(m => {
+                const pos = m.position || {x:0, y:0, z:0};
+                const mx = cx + (pos.x * s);
+                const my = cy - (pos.y * s);
+
+                ctx.fillStyle = '#d29922';
+                ctx.beginPath();
+                ctx.moveTo(mx, my - 6);
+                ctx.lineTo(mx + 6, my);
+                ctx.lineTo(mx, my + 6);
+                ctx.lineTo(mx - 6, my);
+                ctx.closePath();
+                ctx.fill();
+
+                const lbl = m.is_corrected ? `💾 ${m.label} [EDITED]` : `💾 ${m.label}`;
+                drawLabel(`${lbl} (X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m)`, mx, my, '#d29922');
             });
 
-            // Render Threats (Red)
+            // 2. Render Glasses / Phones (Green Squares with exact coordinates)
+            Object.values(data.glasses || {}).forEach(g => {
+                const pos = g.position || {x:0, y:0, z:0};
+                const px = cx + (pos.x * s);
+                const py = cy - (pos.y * s);
+
+                // Phone icon square
+                ctx.fillStyle = '#3fb950';
+                ctx.fillRect(px - 7, py - 7, 14, 14);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(px - 7, py - 7, 14, 14);
+
+                const posLabel = g.formatted_position || `X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m`;
+                drawLabel(`📱 Phone: ${g.id} (${posLabel})`, px, py, '#3fb950');
+            });
+
+            // 3. Render Active Threats (Red Pulsing Dots)
             const activeThreats = (data.threats || []).slice(-15);
             activeThreats.forEach(t => {
-                const tx = cx + (t.position.x * s);
-                const ty = cy - (t.position.y * s);
+                const pos = t.position || {x:0, y:0, z:0};
+                const tx = cx + (pos.x * s);
+                const ty = cy - (pos.y * s);
                 ctx.fillStyle = '#f85149';
                 ctx.beginPath(); ctx.arc(tx, ty, 6, 0, Math.PI * 2); ctx.fill();
-                drawLabel(`🚨 ${t.type}`, tx, ty, '#f85149');
+                drawLabel(`🚨 ${t.type} (${t.detected_by || 'shared'})`, tx, ty, '#f85149');
             });
         }
 

@@ -56,10 +56,9 @@ async def glass_websocket_endpoint(websocket: WebSocket, glass_id: str):
 
             if msg_type in ["telemetry", "glass_telemetry"]:
                 # 1. Extract position & heading orientation
+                from app.services.shared_world_manager import extract_heading_deg
                 pos_dict = data.get("position", {})
-                heading = float(data.get("heading", 0.0))
-                if not heading and isinstance(data.get("pose"), dict):
-                    heading = float(data.get("pose", {}).get("heading", 0.0))
+                heading = extract_heading_deg(data)
 
                 glass_pos = Position3D(
                     x=float(pos_dict.get("x", 0.0)),
@@ -69,23 +68,22 @@ async def glass_websocket_endpoint(websocket: WebSocket, glass_id: str):
 
                 # 2. Extract pose matrix
                 raw_pose = data.get("pose")
-                if raw_pose and isinstance(raw_pose, list):
+                if raw_pose and isinstance(raw_pose, list) and len(raw_pose) == 4:
                     pose_matrix = np.array(raw_pose, dtype=float)
                 else:
                     pose_matrix = np.eye(4)
 
                 # Update glass position, pose, and heading angle
-                world_manager.update_glass_pose(glass_id, pose_matrix, glass_pos, heading=heading)
+                world_manager.update_glass_pose(glass_id, pose_matrix, glass_pos, heading=heading, gps_info=data.get("gps"))
 
                 # 3. Process Detections / Threats (Mapped 3D relative to Glass position & heading)
                 detections = data.get("detections", [])
-                heading_rad = math.radians(heading)
 
                 for i, det in enumerate(detections):
                     obj_type = det.get("object_type", det.get("label", det.get("class_name", "hazard")))
                     det_pos_dict = det.get("position", {})
                     
-                    if "x" in det_pos_dict and "y" in det_pos_dict:
+                    if isinstance(det_pos_dict, dict) and "x" in det_pos_dict and "y" in det_pos_dict:
                         # Absolute position supplied
                         det_pos = Position3D(
                             x=float(det_pos_dict.get("x", 0.0)),
@@ -96,12 +94,13 @@ async def glass_websocket_endpoint(websocket: WebSocket, glass_id: str):
                         # Map relative distance w.r.t glass position & heading
                         dist = float(det.get("distance", 3.5))
                         bearing_deg = float(det.get("bearing", 0.0))
-                        rad = math.radians(heading + bearing_deg)
+                        rad = math.radians((heading + bearing_deg) % 360.0)
                         
-                        det_x = glass_pos.x + dist * math.cos(rad)
-                        det_y = glass_pos.y + dist * math.sin(rad)
+                        det_x = glass_pos.x + dist * math.sin(rad)
+                        det_y = glass_pos.y + dist * math.cos(rad)
                         det_z = glass_pos.z
                         det_pos = Position3D(x=round(det_x, 2), y=round(det_y, 2), z=round(det_z, 2))
+
 
                     threat_id = det.get("threat_id", f"threat_{glass_id}_{obj_type}")
                     conf = float(det.get("confidence", 0.8))

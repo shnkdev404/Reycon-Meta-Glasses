@@ -62,7 +62,7 @@ def test_phase_7_memory_and_dashboard():
     assert dashboard_response.status_code == 200
     html_str = dashboard_response.body.decode("utf-8")
     assert "radarCanvas" in html_str
-    assert "Shared Perception Stack Dashboard" in html_str
+    assert "Server Command Center" in html_str
     print("💻 Interactive Debug Dashboard Visualizer rendering verified (Canvas & HTML UI loaded).")
 
     # Clean up test file

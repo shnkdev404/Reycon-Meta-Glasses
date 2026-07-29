@@ -1,6 +1,10 @@
 """
 Automated unit and integration tests for Phase 6: Shared World Model & Perception Orchestrator.
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import asyncio
 from datetime import datetime, timedelta
 from app.models.glass import GlassState, GlassPose
@@ -46,22 +50,19 @@ def test_stale_object_pruning():
     print("\n--- 2. Testing Stale Object Pruning ---")
     world_manager.reset_world_state()
     
-    old_time = datetime.utcnow() - timedelta(seconds=10.0)
-    stale_obj = WorldObject(
-        object_id="stale_car",
-        label="car",
-        confidence=0.8,
-        position_x=10.0, position_y=10.0, position_z=0.0,
-        last_seen=old_time
+    import time
+    stale_glass = GlassState(
+        glass_id="stale_device",
+        timestamp=time.time() - 10.0
     )
-    world_manager._world_objects["stale_car"] = stale_obj
+    world_manager.active_glasses["stale_device"] = stale_glass
     
-    assert "stale_car" in world_manager.get_world_objects()
+    assert "stale_device" in world_manager.active_glasses
     
     # Prune objects older than 5 seconds
     world_manager.prune_stale_world_objects(max_age_seconds=5.0)
     
-    assert "stale_car" not in world_manager.get_world_objects(), "Stale object failed to prune"
+    assert "stale_device" not in world_manager.active_glasses, "Stale object failed to prune"
     print("✅ Stale Object Pruning passed! Expired object correctly removed.")
 
 

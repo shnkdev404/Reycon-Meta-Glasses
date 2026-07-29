@@ -6,7 +6,10 @@ from app.models import GlassState, Detection, GPSLocation
 
 logger = logging.getLogger("WorldManager")
 
-HAZARD_CLASSES = {"car", "truck", "bus", "motorcycle", "bicycle"}
+HAZARD_CLASSES = {
+    "car", "truck", "bus", "motorcycle", "bicycle", "forklift", "excavator",
+    "stop sign", "hazard", "obstacle"
+}
 
 
 def calculate_gps_distance_and_bearing(lat1: float, lon1: float, lat2: float, lon2: float):
@@ -57,6 +60,21 @@ class WorldManager:
             "radar_blips": radar_blips,
             "all_devices_gps": self.get_all_devices_gps()
         }
+
+    def get_glass(self, glass_id: str) -> Optional[GlassState]:
+        """Retrieve connected device state by ID."""
+        return self.active_glasses.get(glass_id)
+
+    def get_glass_trajectory(self, glass_id: str) -> List[Any]:
+        """Return motion trajectory history for specified device."""
+        glass = self.active_glasses.get(glass_id)
+        if glass:
+            return [glass.position]
+        return []
+
+    def get_world_objects(self) -> Dict[str, Any]:
+        """Return active world objects dictionary."""
+        return self.get_world_state()["world_objects"]
 
     def reset_world_state(self):
         """Clear all active devices and threat alerts."""

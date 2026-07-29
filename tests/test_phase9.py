@@ -1,6 +1,10 @@
 """
 Automated unit and integration tests for Phase 9: Directed Alert Decision Engine.
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import asyncio
 from datetime import datetime
 from app.models.threat import ThreatAlert, ThreatLevel, ThreatType
