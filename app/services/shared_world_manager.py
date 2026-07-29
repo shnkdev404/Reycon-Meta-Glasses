@@ -275,12 +275,16 @@ class SharedWorldManager:
         detected_by_glass_id: str,
         confidence: float = 0.8,
         velocity: Tuple[float, float, float] = (0, 0, 0)
-    ) -> ThreatObject:
+    ) -> Optional[ThreatObject]:
         """
         Glass detects a threat and reports it to the server.
         Server makes it visible to ALL nearby glasses.
         Deduplicates nearby existing threats detected by the same glass.
         """
+        clean_type = object_type.lower().split(" #")[0].strip()
+        if clean_type in ["person", "human", "laptop", "phone", "cell phone"]:
+            return None
+
         with self.lock:
             # Check if matching threat exists nearby from same glass
             existing_match_id = None

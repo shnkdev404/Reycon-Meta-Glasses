@@ -182,6 +182,9 @@ async def websocket_mobile_endpoint(websocket: WebSocket):
                     det_dist = float(getattr(d, 'distance', 5.0))
                     det_bearing = float(getattr(d, 'bearing', 0.0))
                     det_conf = float(getattr(d, 'confidence', 0.9))
+                clean_lbl = det_lbl.lower().split(" #")[0].strip()
+                if clean_lbl in ["person", "human", "laptop", "phone", "cell phone"]:
+                    continue
 
                 rad = math.radians((heading + det_bearing) % 360.0)
                 det_x = round(position.x + det_dist * math.sin(rad), 2)
