@@ -700,15 +700,57 @@
             }
             ctx.setLineDash([]);
 
-            // 3. Render Glass Devices (Green Squares) - Draw before threats so threats appear on top
+            // 3. Render Glass Devices (Green Squares with Vision Cone FOV & Looking Direction)
             glassList.forEach(g => {
                 const pos = g.position;
                 const gx = centerX + (pos.x * zoomScale);
                 const gy = centerY - (pos.y * zoomScale);
+                const headingDeg = g.heading || 0;
+                // Convert compass heading to canvas angle (0 deg = UP/North)
+                const headingRad = (headingDeg - 90) * Math.PI / 180;
 
+                // A. Render 60-degree Vision FOV Cone Wedge
+                const fovHalfAngle = Math.PI / 6; // 30 deg half angle (60 deg total FOV)
+                const fovRadius = 38;
+                
+                ctx.fillStyle = 'rgba(63, 185, 80, 0.18)';
+                ctx.strokeStyle = 'rgba(63, 185, 80, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(gx, gy);
+                ctx.arc(gx, gy, fovRadius, headingRad - fovHalfAngle, headingRad + fovHalfAngle);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // B. Render Facing Direction Vector Arrow Line
+                const arrowLength = 26;
+                const tipX = gx + arrowLength * Math.cos(headingRad);
+                const tipY = gy + arrowLength * Math.sin(headingRad);
+
+                ctx.strokeStyle = '#3fb950';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(gx, gy);
+                ctx.lineTo(tipX, tipY);
+                ctx.stroke();
+
+                // Small arrowhead
+                const headLen = 6;
+                ctx.fillStyle = '#3fb950';
+                ctx.beginPath();
+                ctx.arc(tipX, tipY, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // C. Render Glass Body Box
                 ctx.fillStyle = '#3fb950';
                 ctx.fillRect(gx - 6, gy - 6, 12, 12);
-                drawSmartLabel(`🕶️ ${g.id}`, gx, gy, '#3fb950', false);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(gx - 6, gy - 6, 12, 12);
+
+                const labelStr = `🕶️ ${g.id} (${Math.round(headingDeg)}°)`;
+                drawSmartLabel(labelStr, gx, gy, '#3fb950', false);
             });
 
             // 4. Render Active Threats (Red Pulsing Circles) - Deduplicate duplicate threat entries

@@ -108,29 +108,32 @@ class SharedWorldManager:
     
     # ============ GLASS MANAGEMENT ============
     
-    def register_glass(self, glass_id: str, position: Position3D):
+    def register_glass(self, glass_id: str, position: Position3D, heading: float = 0.0):
         """Register a new glass device"""
         with self.lock:
             self.glasses[glass_id] = {
                 'id': glass_id,
                 'position': position,
+                'heading': float(heading),
                 'pose': np.eye(4),  # Identity transform
                 'timestamp': datetime.now().timestamp(),
                 'connected': True,
                 'map_points': [],  # Points visible from this glass
                 'threat_list': [],  # Threats it can see
             }
-            logger.info(f"✅ Glass registered: {glass_id}")
+            logger.info(f"✅ Glass registered: {glass_id} at {position} heading={heading}°")
     
-    def update_glass_pose(self, glass_id: str, pose: np.ndarray, position: Position3D):
+    def update_glass_pose(self, glass_id: str, pose: np.ndarray, position: Position3D, heading: float = 0.0):
         """Update glass position and orientation"""
         with self.lock:
             if glass_id not in self.glasses:
-                self.register_glass(glass_id, position)
-            
-            self.glasses[glass_id]['pose'] = pose
-            self.glasses[glass_id]['position'] = position
-            self.glasses[glass_id]['timestamp'] = datetime.now().timestamp()
+                self.register_glass(glass_id, position, heading)
+            else:
+                self.glasses[glass_id]['pose'] = pose
+                self.glasses[glass_id]['position'] = position
+                self.glasses[glass_id]['heading'] = float(heading)
+                self.glasses[glass_id]['timestamp'] = datetime.now().timestamp()
+                self.glasses[glass_id]['connected'] = True
     
     def get_glass_position(self, glass_id: str) -> Optional[Position3D]:
         """Get glass position"""
@@ -153,12 +156,21 @@ class SharedWorldManager:
         """
         Glass detects a threat and reports it to the server.
         Server makes it visible to ALL nearby glasses.
-        
-        KEY FEATURE: Glass B detects threat → All glasses within range get alerted!
+        Deduplicates nearby existing threats detected by the same glass.
         """
         with self.lock:
+            # Check if matching threat exists nearby from same glass
+            existing_match_id = None
+            for tid, existing in self.threats.items():
+                if existing.detected_by_glass_id == detected_by_glass_id and existing.object_type == object_type:
+                    if existing.position.distance_to(position) <= 2.0:
+                        existing_match_id = tid
+                        break
+            
+            target_id = existing_match_id or threat_id
+
             threat = ThreatObject(
-                threat_id=threat_id,
+                threat_id=target_id,
                 object_type=object_type,
                 position=position,
                 velocity=velocity,
@@ -166,19 +178,18 @@ class SharedWorldManager:
                 detected_by_glass_id=detected_by_glass_id
             )
             
-            self.threats[threat_id] = threat
+            self.threats[target_id] = threat
             
-            # Add to history (for memory/persistence)
+            # Add to history
             self.threat_history.append({
-                'threat_id': threat_id,
+                'threat_id': target_id,
                 'type': object_type,
                 'position': position.to_dict(),
                 'detected_by': detected_by_glass_id,
                 'timestamp': datetime.now().isoformat()
             })
             
-            logger.info(f"🚨 Threat detected: {object_type} at {position}")
-            
+            logger.info(f"🚨 Threat updated: {object_type} [{target_id}] at {position}")
             return threat
     
     def get_threats_for_glass(self, glass_id: str, max_distance: float = 20.0) -> List[ThreatObject]:

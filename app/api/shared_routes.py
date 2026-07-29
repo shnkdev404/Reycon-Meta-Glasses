@@ -28,6 +28,7 @@ async def get_world_state():
             glasses_dict[gid] = {
                 "id": gid,
                 "position": pos.to_dict() if hasattr(pos, "to_dict") else pos,
+                "heading": float(ginfo.get("heading", 0.0)),
                 "connected": ginfo.get("connected", True),
                 "timestamp": ginfo.get("timestamp")
             }
@@ -69,6 +70,7 @@ async def get_glasses():
                 {
                     "id": gid,
                     "position": g["position"].to_dict() if hasattr(g["position"], "to_dict") else g["position"],
+                    "heading": float(g.get("heading", 0.0)),
                     "connected": g.get("connected", True)
                 }
                 for gid, g in world_manager.glasses.items()
