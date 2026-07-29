@@ -21,13 +21,22 @@ ssl_context.check_hostname = False
 ssl_context.verify_mode = ssl.CERT_NONE
 
 
-async def run_glass_b():
-    uri = "wss://127.0.0.1:8000/ws/mobile?glass_id=glass_B"
+async def connect_ws_helper(endpoint_path):
+    for uri, ssl_param in [(f"wss://127.0.0.1:8000{endpoint_path}", ssl_context), (f"ws://127.0.0.1:8000{endpoint_path}", None)]:
+        try:
+            ws = await websockets.connect(uri, ssl=ssl_param, ping_interval=10, ping_timeout=10)
+            return ws
+        except Exception:
+            continue
+    raise ConnectionError(f"Could not connect to 127.0.0.1:8000{endpoint_path}")
 
+
+async def run_glass_b():
     while True:
         try:
             print("👓 [Glass B] Connecting to Shared Perception Server...")
-            async with websockets.connect(uri, ssl=ssl_context, ping_interval=10, ping_timeout=10) as ws:
+            ws = await connect_ws_helper("/ws/mobile?glass_id=glass_B")
+            async with ws:
                 print("👓 [Glass B] Connected! Listening for directed alerts...")
                 while True:
                     payload_b = {
@@ -61,13 +70,13 @@ async def run_glass_b():
 
 async def run_glass_a():
     await asyncio.sleep(1.5)  # Wait for Glass B to connect first
-    uri = "wss://127.0.0.1:8000/ws/mobile?glass_id=glass_A"
     truck_y = 0.0
 
     while True:
         try:
             print("\n👓 [Glass A] Connecting to Shared Perception Server...")
-            async with websockets.connect(uri, ssl=ssl_context, ping_interval=10, ping_timeout=10) as ws:
+            ws = await connect_ws_helper("/ws/mobile?glass_id=glass_A")
+            async with ws:
                 print("👓 [Glass A] Connected! Streaming continuous truck tracking...")
                 while True:
                     truck_y += 0.5

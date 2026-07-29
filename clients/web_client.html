@@ -227,7 +227,11 @@
     }
 
     function connect() {
-        ws = new WebSocket("ws://127.0.0.1:8000/ws");
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const host = window.location.hostname || '127.0.0.1';
+        const port = window.location.port || '8000';
+        const wsUrl = `${protocol}://${host}:${port}/ws`;
+        ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
             document.getElementById("dot").classList.add("connected");

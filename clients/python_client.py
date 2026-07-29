@@ -1,10 +1,26 @@
+import sys
 import asyncio
 import json
 import websockets
+import ssl
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+async def connect_websocket():
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+
+    for uri, ssl_param in [("wss://127.0.0.1:8000/ws", ssl_context), ("ws://127.0.0.1:8000/ws", None)]:
+        try:
+            ws = await websockets.connect(uri, ssl=ssl_param)
+            return ws
+        except Exception:
+            continue
+    raise ConnectionError("Unable to connect via WSS or WS on 127.0.0.1:8000")
 
 async def main():
-    uri = "ws://127.0.0.1:8000/ws"
     glass_id = "glass_A"
 
     sample_packets = [
@@ -28,7 +44,8 @@ async def main():
     ]
 
     try:
-        async with websockets.connect(uri) as websocket:
+        websocket = await connect_websocket()
+        async with websocket:
             print(f"✅ Connected to Shared Perception Server as [{glass_id}]!")
 
             for packet in sample_packets:
