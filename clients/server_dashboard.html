@@ -1,768 +1,173 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REYCON Server Command Center - Shared Perception Platform</title>
+    <title>shnkdev404/Reycon-Meta-Glasses · Server Command Center</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #05080e;
-            --bg-glass: rgba(13, 20, 33, 0.85);
-            --border-glass: rgba(0, 242, 254, 0.18);
-            --accent-cyan: #00f2fe;
-            --accent-green: #00e676;
-            --accent-red: #ff1744;
-            --accent-amber: #ff9100;
-            --accent-purple: #818cf8;
-            --text-primary: #f0f4f8;
-            --text-secondary: #94a3b8;
-            --font-main: 'Outfit', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
+            --color-canvas-default: #0d1117;
+            --color-canvas-overlay: #161b22;
+            --color-border-default: #30363d;
+            --color-border-muted: #21262d;
+            --color-fg-default: #c9d1d9;
+            --color-fg-muted: #8b949e;
+            --color-accent-fg: #58a6ff;
+            --color-success-fg: #3fb950;
+            --color-success-emphasis: #238636;
+            --color-danger-fg: #f85149;
+            --color-danger-emphasis: #da3633;
+            --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-sans); background: var(--color-canvas-default); color: var(--color-fg-default); min-height: 100vh; display: flex; flex-direction: column; }
 
-        body {
-            font-family: var(--font-main);
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            background-image:
-                radial-gradient(circle at 50% 0%, rgba(0, 242, 254, 0.08) 0%, transparent 60%),
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 35px 35px, 35px 35px;
-        }
+        .gh-header { background: #161b22; border-bottom: 1px solid var(--color-border-default); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+        .gh-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--color-fg-default); font-weight: 600; font-size: 1.1rem; }
+        .gh-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--color-border-default); background: rgba(110,118,129,0.1); }
+        .gh-badge.badge-success { color: var(--color-success-fg); border-color: rgba(46,160,67,0.4); background: rgba(46,160,67,0.15); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-success-fg); box-shadow: 0 0 8px var(--color-success-fg); }
 
-        /* Top Bar Header */
-        header {
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-glass);
-            padding: 16px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        .gh-tabs-bar { background: #161b22; border-bottom: 1px solid var(--color-border-default); padding: 0 24px; display: flex; gap: 8px; }
+        .gh-tab { padding: 10px 16px; font-size: 0.88rem; font-weight: 500; color: var(--color-fg-muted); border-bottom: 2px solid transparent; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+        .gh-tab.active { color: var(--color-fg-default); border-bottom-color: #f78166; font-weight: 600; }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .gh-container { max-width: 1440px; width: 100%; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 1fr 380px; gap: 24px; flex: 1; }
+        .gh-box { background: var(--color-canvas-overlay); border: 1px solid var(--color-border-default); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+        .gh-box-header { background: #161b22; border-bottom: 1px solid var(--color-border-default); padding: 12px 16px; font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+        .gh-box-body { padding: 16px; flex: 1; }
 
-        .brand-logo {
-            width: 38px;
-            height: 38px;
-            background: linear-gradient(135deg, var(--accent-cyan), #0072ff);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.5);
-        }
+        canvas { display: block; width: 100%; height: 520px; background: radial-gradient(circle at center, #161b22 0%, #0d1117 80%); border: 1px solid var(--color-border-default); border-radius: 6px; }
 
-        .brand-title {
-            font-size: 1.3rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(to right, #ffffff, var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .btn { background: #21262d; color: #c9d1d9; border: 1px solid var(--color-border-default); padding: 6px 12px; font-size: 0.82rem; font-weight: 500; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); }
+        .btn:hover { background: #30363d; border-color: #8b949e; }
+        .btn-primary { background: var(--color-success-emphasis); color: #fff; border-color: rgba(240,246,252,0.1); }
+        .btn-primary:hover { background: #2ea043; }
 
-        .brand-sub {
-            font-size: 0.78rem;
-            color: var(--text-secondary);
-            font-family: var(--font-mono);
-        }
+        .stats-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+        .stat-card { background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 6px; padding: 12px; }
+        .stat-card .label { font-size: 0.75rem; color: var(--color-fg-muted); margin-bottom: 4px; }
+        .stat-card .value { font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); }
 
-        .server-status-pill {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(0, 242, 254, 0.08);
-            border: 1px solid var(--border-glass);
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--accent-green);
-            box-shadow: 0 0 10px var(--accent-green);
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.4;
-                transform: scale(1.3);
-            }
-
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        /* Main Dashboard Grid */
-        main {
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* Top Metrics Counter Cards */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-        }
-
-        .metric-card {
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 18px 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .metric-val {
-            font-size: 2.1rem;
-            font-weight: 800;
-            font-family: var(--font-mono);
-            background: linear-gradient(to bottom, #ffffff, var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .metric-lbl {
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-secondary);
-            font-weight: 700;
-            margin-top: 4px;
-        }
-
-        .metric-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: rgba(0, 242, 254, 0.1);
-            border: 1px solid rgba(0, 242, 254, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* 2-Column Section: Radar Visualizer & Live Threat Log */
-        .primary-grid {
-            display: grid;
-            grid-template-columns: 1.3fr 0.7fr;
-            gap: 20px;
-        }
-
-        .card {
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .card-header {
-            font-size: 0.9rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--text-secondary);
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        canvas#radarCanvas {
-            background: radial-gradient(circle at center, #06111d 0%, #020509 100%);
-            border-radius: 16px;
-            border: 1px solid var(--border-glass);
-            width: 100%;
-            height: 460px;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
-        }
-
-        /* Threat Alerts Feed */
-        .threat-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 460px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-
-        .threat-alert-box {
-            border-radius: 14px;
-            padding: 14px 16px;
-            background: rgba(255, 23, 68, 0.15);
-            border: 1px solid var(--accent-red);
-            box-shadow: 0 0 20px rgba(255, 23, 68, 0.25);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .threat-alert-box.WARNING {
-            background: rgba(255, 145, 0, 0.15);
-            border-color: var(--accent-amber);
-            box-shadow: 0 0 15px rgba(255, 145, 0, 0.2);
-        }
-
-        .alert-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 800;
-            font-size: 0.85rem;
-            font-family: var(--font-mono);
-        }
-
-        .alert-top.CRITICAL {
-            color: var(--accent-red);
-        }
-
-        .alert-top.WARNING {
-            color: var(--accent-amber);
-        }
-
-        .alert-msg {
-            font-size: 0.88rem;
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        /* Data Tables Section */
-        .tables-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.82rem;
-            font-family: var(--font-mono);
-        }
-
-        th {
-            text-align: left;
-            color: var(--text-secondary);
-            padding: 10px;
-            border-bottom: 1px solid var(--border-glass);
-            text-transform: uppercase;
-            font-size: 0.72rem;
-            letter-spacing: 1px;
-        }
-
-        td {
-            padding: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .badge-pill {
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 0.72rem;
-        }
-
-        .badge-pill.glass {
-            background: rgba(0, 242, 254, 0.15);
-            color: var(--accent-cyan);
-            border: 1px solid var(--accent-cyan);
-        }
-
-        .badge-pill.vehicle {
-            background: rgba(255, 23, 68, 0.18);
-            color: var(--accent-red);
-            border: 1px solid var(--accent-red);
-        }
-
-        .badge-pill.worker {
-            background: rgba(0, 230, 118, 0.18);
-            color: var(--accent-green);
-            border: 1px solid var(--accent-green);
-        }
-
-        /* JSON Raw Inspector */
-        pre#jsonViewer {
-            background: #020617;
-            border: 1px solid var(--border-glass);
-            border-radius: 12px;
-            padding: 16px;
-            font-family: var(--font-mono);
-            font-size: 0.78rem;
-            color: var(--accent-cyan);
-            max-height: 280px;
-            overflow: auto;
-        }
+        .code-box { background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 6px; padding: 10px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-accent-fg); overflow-x: auto; max-height: 240px; }
     </style>
 </head>
-
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="brand-logo">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                </svg>
-            </div>
-            <div>
-                <div class="brand-title">REYCON Central Server Command Center</div>
-                <div class="brand-sub">Shared Perception & Collaborative World Model Orchestrator</div>
-            </div>
-        </div>
-        <div class="server-status-pill">
-            <div class="pulse-dot"></div>
-            <span>SHARED WORLD MODEL ACTIVE</span>
+    <header class="gh-header">
+        <a href="https://github.com/shnkdev404/Reycon-Meta-Glasses" class="gh-brand" target="_blank">
+            <svg height="24" viewBox="0 0 16 16" width="24" fill="#f0f6fc"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
+            shnkdev404 / Reycon-Meta-Glasses
+        </a>
+        <div class="gh-badge badge-success">
+            <span class="status-dot"></span>
+            <span>Server Command Center Online</span>
         </div>
     </header>
 
-    <main>
-        <!-- Top Metrics Counter Cards -->
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div>
-                    <div class="metric-val" id="metricGlasses">0</div>
-                    <div class="metric-lbl">Connected Glasses</div>
-                </div>
-                <div class="metric-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)"
-                        stroke-width="2">
-                        <circle cx="6" cy="12" r="4" />
-                        <circle cx="18" cy="12" r="4" />
-                        <line x1="10" y1="12" x2="14" y2="12" />
-                    </svg>
-                </div>
+    <nav class="gh-tabs-bar">
+        <a class="gh-tab" href="/public/shared_dashboard.html">3D Spatial Radar</a>
+        <a class="gh-tab active" href="#">Server Command Center</a>
+        <a class="gh-tab" href="/mobile" target="_blank">Mobile AR HUD Client</a>
+    </nav>
+
+    <div class="gh-container">
+        <div class="gh-box">
+            <div class="gh-box-header">
+                <div>📡 Server Spatial Telemetry Matrix</div>
+                <div style="font-size: 0.78rem; color: var(--color-fg-muted);">● Connected Glasses  ● Hazards  ● SLAM Graph</div>
             </div>
-            <div class="metric-card">
-                <div>
-                    <div class="metric-val" id="metricObjects">0</div>
-                    <div class="metric-lbl">Fused 3D Objects</div>
-                </div>
-                <div class="metric-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)"
-                        stroke-width="2">
-                        <path
-                            d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                    </svg>
-                </div>
-            </div>
-            <div class="metric-card">
-                <div>
-                    <div class="metric-val" id="metricThreats"
-                        style="background: linear-gradient(to bottom, #fff, var(--accent-red)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                        0</div>
-                    <div class="metric-lbl">Active Hazard Threats</div>
-                </div>
-                <div class="metric-icon"
-                    style="background: rgba(255, 23, 68, 0.1); border-color: rgba(255, 23, 68, 0.3);">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-red)"
-                        stroke-width="2">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                        <line x1="12" y1="9" x2="12" y2="13" />
-                        <line x1="12" y1="17" x2="12.01" y2="17" />
-                    </svg>
-                </div>
-            </div>
-            <div class="metric-card">
-                <div>
-                    <div class="metric-val" id="metricLandmarks">0</div>
-                    <div class="metric-lbl">SLAM KeyFrames / Points</div>
-                </div>
-                <div class="metric-icon">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)"
-                        stroke-width="2">
-                        <path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z" />
-                        <circle cx="12" cy="10" r="3" />
-                    </svg>
-                </div>
+            <div class="gh-box-body">
+                <canvas id="serverCanvas"></canvas>
             </div>
         </div>
 
-        <!-- Primary Grid: Live 3D Spatial Radar & Directed Alert Stream -->
-        <div class="primary-grid">
-            <div class="card">
-                <div class="card-header">
-                    <span>Global Shared Perception 3D Spatial Radar</span>
-                    <span style="color: var(--accent-cyan); font-family: var(--font-mono); font-size: 0.78rem;">SCALE:
-                        1m = 20px</span>
-                </div>
-                <canvas id="radarCanvas"></canvas>
-            </div>
-
-            <div class="card">
-                <div class="card-header">Directed Non-Broadcast Threat Stream</div>
-                <div class="threat-feed" id="threatFeed">
-                    <div style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 20px;">
-                        No active collision threats detected in global shared model.
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="gh-box">
+                <div class="gh-box-header">System Metrics & Telemetry</div>
+                <div class="gh-box-body">
+                    <div class="stats-summary">
+                        <div class="stat-card">
+                            <div class="label">GLASSES</div>
+                            <div class="value" id="sGlasses" style="color: var(--color-success-fg);">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">HAZARDS</div>
+                            <div class="value" id="sThreats" style="color: var(--color-danger-fg);">0</div>
+                        </div>
                     </div>
+                    <button class="btn btn-primary" onclick="pollData()" style="width: 100%; justify-content: center;">🔄 Refresh State</button>
+                </div>
+            </div>
+
+            <div class="gh-box" style="flex: 1;">
+                <div class="gh-box-header">Raw World Model Telemetry Stream</div>
+                <div class="gh-box-body">
+                    <div class="code-box" id="jsonBox">Polling telemetry data...</div>
                 </div>
             </div>
         </div>
-
-        <!-- Data Tables Grid: Connected Devices & Combined Objects -->
-        <div class="tables-grid">
-            <div class="card">
-                <div class="card-header">Connected Smart Glasses & Workers</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Device ID</th>
-                            <th>6DoF Pose (X, Y, Z)</th>
-                            <th>Heading</th>
-                            <th>GPS Telemetry</th>
-                        </tr>
-                    </thead>
-                    <tbody id="glassesTableBody">
-                        <tr>
-                            <td colspan="4" style="color: var(--text-secondary);">No devices connected yet.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="card">
-                <div class="card-header">Combined Fused 3D World Objects</div>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tracked ID</th>
-                            <th>Position (X, Y)</th>
-                            <th>Velocity (Vx, Vy)</th>
-                            <th>Observing Glasses</th>
-                        </tr>
-                    </thead>
-                    <tbody id="objectsTableBody">
-                        <tr>
-                            <td colspan="4" style="color: var(--text-secondary);">No active 3D objects in shared world.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Raw Synchronized World Model JSON Viewer -->
-        <div class="card">
-            <div class="card-header">
-                <span>Raw Synchronized World Model State (JSON)</span>
-                <span style="font-size: 0.75rem; color: var(--text-secondary);">POLLING INTERVAL: 1000ms</span>
-            </div>
-            <pre id="jsonViewer">Fetching live server state...</pre>
-        </div>
-    </main>
+    </div>
 
     <script>
-        let sweepAngle = 0;
+        const canvas = document.getElementById('serverCanvas');
+        const ctx = canvas.getContext('2d');
 
-        async function updateDashboard() {
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = 520;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        async function pollData() {
             try {
-                // Query server API for current shared world model state
-                const response = await fetch('/world');
-                const data = await response.json();
-
-                // Update Metric Counters
-                const glasses = data.glasses || {};
-                const worldObjs = data.world_objects || {};
-                const threats = data.active_threats || [];
-                const glassCount = Object.keys(glasses).length;
-                const objCount = Object.keys(worldObjs).length;
-
-                document.getElementById('metricGlasses').innerText = glassCount;
-                document.getElementById('metricObjects').innerText = objCount;
-                document.getElementById('metricThreats').innerText = threats.length;
-                document.getElementById('metricLandmarks').innerText = (glassCount * 4) + (objCount * 2);
-
-                // Render JSON Inspector
-                document.getElementById('jsonViewer').innerText = JSON.stringify(data, null, 2);
-
-                // Render Tables & Threat Stream
-                renderGlassesTable(glasses);
-                renderObjectsTable(worldObjs);
-                renderThreatFeed(threats);
-
-                // Render 3D Spatial Radar Canvas
-                drawSpatialRadar(data);
-
-            } catch (err) {
-                console.error("Dashboard error:", err);
-            }
+                const res = await fetch('/api/shared/world_state');
+                const data = await res.json();
+                document.getElementById('sGlasses').innerText = Object.keys(data.glasses || {}).length;
+                document.getElementById('sThreats').innerText = (data.threats || []).length;
+                document.getElementById('jsonBox').innerText = JSON.stringify(data, null, 2);
+                draw(data);
+            } catch(e) {}
         }
 
-        function renderGlassesTable(glasses) {
-            const tbody = document.getElementById('glassesTableBody');
-            const keys = Object.keys(glasses);
-            if (keys.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-secondary);">No devices connected yet.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = keys.map(gid => {
-                const g = glasses[gid];
-                const px = (g.pose ? g.pose.x : (g.position ? g.position.x : 0)).toFixed(2);
-                const py = (g.pose ? g.pose.y : (g.position ? g.position.y : 0)).toFixed(2);
-                const pz = (g.pose ? g.pose.z : (g.position ? g.position.z : 0)).toFixed(2);
-                const heading = (g.heading !== undefined ? g.heading : (g.pose ? g.pose.heading : 0)).toFixed(1);
-                const gpsStr = g.gps ? `LAT: ${g.gps.latitude.toFixed(4)}° | LON: ${g.gps.longitude.toFixed(4)}°` : 'No GPS Fix';
-
-                return `
-                    <tr>
-                        <td><span class="badge-pill glass">👓 ${gid}</span></td>
-                        <td>(${px}m, ${py}m, ${pz}m)</td>
-                        <td>${heading}°</td>
-                        <td>${gpsStr}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderObjectsTable(objects) {
-            const tbody = document.getElementById('objectsTableBody');
-            const keys = Object.keys(objects);
-            if (keys.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-secondary);">No active 3D objects in shared world.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = keys.map(oid => {
-                const obj = objects[oid];
-                const label = obj.label || oid;
-                const px = (obj.position_x !== undefined ? obj.position_x : 0).toFixed(2);
-                const py = (obj.position_y !== undefined ? obj.position_y : 0).toFixed(2);
-                const vx = (obj.velocity_x !== undefined ? obj.velocity_x : 0).toFixed(2);
-                const vy = (obj.velocity_y !== undefined ? obj.velocity_y : 0).toFixed(2);
-                const sources = (obj.source_glasses || []).join(', ') || 'Glass Observation';
-
-                const isVehicle = label.toLowerCase().includes('truck') || label.toLowerCase().includes('car') || label.toLowerCase().includes('vehicle');
-
-                return `
-                    <tr>
-                        <td><span class="badge-pill ${isVehicle ? 'vehicle' : 'worker'}">${label.toUpperCase()}</span></td>
-                        <td>(${px}m, ${py}m)</td>
-                        <td>(${vx}m/s, ${vy}m/s)</td>
-                        <td>${sources}</td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function renderThreatFeed(threats) {
-            const container = document.getElementById('threatFeed');
-            if (!threats || threats.length === 0) {
-                container.innerHTML = '<div style="font-size: 0.82rem; color: var(--text-secondary); text-align: center; padding: 20px;">No active collision threats detected in global shared model.</div>';
-                return;
-            }
-            container.innerHTML = threats.map(t => {
-                const severity = t.severity || t.threat_level || "CRITICAL";
-                const target = t.target_glass_id || t.glass_id || "All Units";
-                const msg = t.warning_message || `${t.class_name} hazard detected!`;
-                const ttc = t.time_to_collision !== undefined ? `${t.time_to_collision}s` : 'Imminent';
-
-                return `
-                    <div class="threat-alert-box ${severity}">
-                        <div class="alert-top ${severity}">
-                            <span>🚨 [${severity}] DIRECTED ALERT</span>
-                            <span>TARGET: ${target}</span>
-                        </div>
-                        <div class="alert-msg">${msg}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); font-family: var(--font-mono);">
-                            ESTIMATED TIME-TO-COLLISION: <strong>${ttc}</strong>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function drawSpatialRadar(data) {
-            const canvas = document.getElementById('radarCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = canvas.clientWidth;
-            canvas.height = canvas.clientHeight;
+        function draw(data) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
-            const scale = 20; // 1m = 20px
+            const s = 12;
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // 1. Concentric Distance Rings
-            ctx.strokeStyle = 'rgba(0, 242, 254, 0.15)';
-            ctx.lineWidth = 1;
-            for (let r = 40; r < 400; r += 40) {
-                ctx.beginPath();
-                ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                ctx.stroke();
+            ctx.strokeStyle = '#21262d';
+            for (let r = 40; r <= 400; r += 40) {
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
             }
 
-            // 2. Crosshairs
-            ctx.strokeStyle = 'rgba(0, 242, 254, 0.1)';
-            ctx.beginPath();
-            ctx.moveTo(cx, 0); ctx.lineTo(cx, canvas.height);
-            ctx.moveTo(0, cy); ctx.lineTo(canvas.width, cy);
-            ctx.stroke();
-
-            // 3. Rotating Radar Sweep Beam
-            sweepAngle = (sweepAngle + 0.02) % (Math.PI * 2);
-            ctx.save();
-            ctx.translate(cx, cy);
-            const gradient = ctx.createConicGradient(sweepAngle, 0, 0);
-            gradient.addColorStop(0, 'rgba(0, 242, 254, 0.25)');
-            gradient.addColorStop(0.1, 'rgba(0, 242, 254, 0.02)');
-            gradient.addColorStop(1, 'rgba(0, 242, 254, 0)');
-            ctx.fillStyle = gradient;
-            ctx.beginPath();
-            ctx.arc(0, 0, 380, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-
-            // 4. Render Tracked 3D Objects & Velocities
-            const worldObjs = data.world_objects || {};
-            Object.values(worldObjs).forEach(obj => {
-                const px = obj.position_x || 0;
-                const py = obj.position_y || 0;
-                const vx = obj.velocity_x || 0;
-                const vy = obj.velocity_y || 0;
-
-                const screenX = cx + (px * scale);
-                const screenY = cy - (py * scale);
-
-                const label = obj.label || 'object';
-                const isVehicle = label.toLowerCase().includes('truck') || label.toLowerCase().includes('car') || label.toLowerCase().includes('vehicle');
-
-                // Draw Object Dot
-                ctx.fillStyle = isVehicle ? '#ff1744' : '#00e676';
-                ctx.shadowColor = isVehicle ? '#ff1744' : '#00e676';
-                ctx.shadowBlur = 10;
-                ctx.beginPath();
-                ctx.arc(screenX, screenY, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-
-                // Velocity Vector Arrow
-                if (vx !== 0 || vy !== 0) {
-                    ctx.strokeStyle = '#00f2fe';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(screenX, screenY);
-                    ctx.lineTo(screenX + (vx * scale), screenY - (vy * scale));
-                    ctx.stroke();
-                }
-
-                // Label
-                ctx.fillStyle = '#f0f4f8';
-                ctx.font = '700 11px "JetBrains Mono"';
-                ctx.fillText(label.toUpperCase(), screenX + 10, screenY + 4);
+            // Render Glasses (Green)
+            Object.values(data.glasses || {}).forEach(g => {
+                const px = cx + (g.position.x * s);
+                const py = cy - (g.position.y * s);
+                ctx.fillStyle = '#3fb950';
+                ctx.fillRect(px - 6, py - 6, 12, 12);
+                ctx.fillText(`🕶️ ${g.id}`, px + 10, py + 4);
             });
 
-            // 5. Render Connected Smart Glasses & Heading Cones
-            const glasses = data.glasses || {};
-            Object.values(glasses).forEach(g => {
-                const px = g.pose ? g.pose.x : (g.position ? g.position.x : 0);
-                const py = g.pose ? g.pose.y : (g.position ? g.position.y : 0);
-                const heading = g.heading !== undefined ? g.heading : (g.pose ? g.pose.heading : 0);
-
-                const screenX = cx + (px * scale);
-                const screenY = cy - (py * scale);
-                const headingRad = (heading - 90) * (Math.PI / 180);
-
-                // Orientation Cone
-                ctx.fillStyle = 'rgba(129, 140, 248, 0.25)';
-                ctx.beginPath();
-                ctx.moveTo(screenX, screenY);
-                ctx.arc(screenX, screenY, 50, headingRad - Math.PI / 6, headingRad + Math.PI / 6);
-                ctx.closePath();
-                ctx.fill();
-
-                // Glass Marker
-                ctx.fillStyle = '#818cf8';
-                ctx.shadowColor = '#818cf8';
-                ctx.shadowBlur = 12;
-                ctx.beginPath();
-                ctx.arc(screenX, screenY, 7, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-
-                // Glass ID Label
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 12px "Outfit"';
-                ctx.fillText(`👓 ${g.glass_id}`, screenX + 12, screenY - 8);
+            // Render Threats (Red)
+            (data.threats || []).forEach(t => {
+                const tx = cx + (t.position.x * s);
+                const ty = cy - (t.position.y * s);
+                ctx.fillStyle = '#f85149';
+                ctx.beginPath(); ctx.arc(tx, ty, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.fillText(`🚨 ${t.type}`, tx + 10, ty + 4);
             });
         }
 
-        setInterval(updateDashboard, 500);
-        updateDashboard();
-
-        // Continuous smooth 60 FPS radar sweep animation
-        function animateSweep() {
-            requestAnimationFrame(animateSweep);
-        }
-        requestAnimationFrame(animateSweep);
+        setInterval(pollData, 2000);
+        pollData();
     </script>
 </body>
-
 </html>

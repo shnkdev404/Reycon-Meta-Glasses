@@ -1,25 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-color-mode="dark" data-dark-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REYCON Shared Perception Command Dashboard</title>
+    <title>shnkdev404/Reycon-Meta-Glasses · Shared Perception Command Center</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #05080e;
-            --panel-bg: rgba(13, 20, 33, 0.85);
-            --border-color: rgba(0, 242, 254, 0.2);
-            --accent-cyan: #00f2fe;
-            --accent-green: #00e676;
-            --accent-red: #ff1744;
-            --accent-gray: #94a3b8;
-            --accent-purple: #a855f7;
-            --text-main: #f0f4f8;
-            --font-main: 'Outfit', sans-serif;
-            --font-mono: 'JetBrains Mono', monospace;
+            --color-canvas-default: #0d1117;
+            --color-canvas-overlay: #161b22;
+            --color-canvas-subtle: #161b22;
+            --color-border-default: #30363d;
+            --color-border-muted: #21262d;
+            --color-fg-default: #c9d1d9;
+            --color-fg-muted: #8b949e;
+            --color-fg-subtle: #484f58;
+            --color-accent-fg: #58a6ff;
+            --color-accent-emphasis: #1f6feb;
+            --color-success-fg: #3fb950;
+            --color-success-emphasis: #238636;
+            --color-danger-fg: #f85149;
+            --color-danger-emphasis: #da3633;
+            --color-attention-fg: #d29922;
+            --color-done-fg: #a371f7;
+            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, monospace;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
         }
 
         * {
@@ -29,318 +36,526 @@
         }
 
         body {
-            font-family: var(--font-main);
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+            font-family: var(--font-sans);
+            background-color: var(--color-canvas-default);
+            color: var(--color-fg-default);
+            line-height: 1.5;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(0, 242, 254, 0.08) 0%, transparent 60%),
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 40px 40px, 40px 40px;
         }
 
-        header {
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 16px 28px;
+        /* GitHub Header Navigation */
+        .gh-header {
+            background-color: #161b22;
+            border-bottom: 1px solid var(--color-border-default);
+            padding: 12px 24px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
         }
 
-        .brand {
+        .gh-brand {
             display: flex;
             align-items: center;
             gap: 12px;
+            text-decoration: none;
+            color: var(--color-fg-default);
         }
 
-        .brand-badge {
-            background: linear-gradient(135deg, var(--accent-cyan), #0077ff);
-            color: #000;
-            font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            letter-spacing: 1px;
+        .gh-octicon {
+            fill: #f0f6fc;
         }
 
-        h1 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .status-pill {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(0, 230, 118, 0.1);
-            border: 1px solid rgba(0, 230, 118, 0.3);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            color: var(--accent-green);
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: var(--accent-green);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--accent-green);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0.4; }
-            50% { opacity: 1; }
-            100% { opacity: 0.4; }
-        }
-
-        main {
-            padding: 24px;
-            display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 24px;
-            flex: 1;
-        }
-
-        .canvas-container {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .canvas-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .legend {
-            display: flex;
-            gap: 16px;
-            font-size: 0.82rem;
-            color: #94a3b8;
-        }
-
-        .legend-item {
+        .gh-repo-path {
+            font-size: 1.1rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .square-icon {
-            width: 12px;
-            height: 12px;
-            background: var(--accent-green);
-            border-radius: 2px;
+        .gh-repo-path span.owner {
+            color: var(--color-accent-fg);
+            font-weight: 400;
         }
 
-        .circle-icon {
-            width: 12px;
-            height: 12px;
-            background: var(--accent-red);
-            border-radius: 50%;
+        .gh-repo-path span.divider {
+            color: var(--color-fg-muted);
         }
 
-        .line-icon {
-            width: 18px;
-            height: 2px;
-            border-top: 2px dashed var(--accent-cyan);
+        .gh-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            border: 1px solid var(--color-border-default);
+            background-color: rgba(110, 118, 129, 0.1);
         }
 
-        .dot-icon {
+        .gh-badge.badge-success {
+            color: var(--color-success-fg);
+            border-color: rgba(46, 160, 67, 0.4);
+            background-color: rgba(46, 160, 67, 0.15);
+        }
+
+        .gh-badge .status-dot {
             width: 8px;
             height: 8px;
-            background: var(--accent-gray);
             border-radius: 50%;
+            background-color: var(--color-success-fg);
+            box-shadow: 0 0 8px var(--color-success-fg);
+        }
+
+        /* Sub-header Navigation Tabs */
+        .gh-tabs-bar {
+            background-color: #161b22;
+            border-bottom: 1px solid var(--color-border-default);
+            padding: 0 24px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .gh-tab {
+            padding: 10px 16px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--color-fg-muted);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.15s ease, border-color 0.15s ease;
+            text-decoration: none;
+        }
+
+        .gh-tab:hover {
+            color: var(--color-fg-default);
+        }
+
+        .gh-tab.active {
+            color: var(--color-fg-default);
+            border-bottom-color: #f78166;
+            font-weight: 600;
+        }
+
+        .gh-counter {
+            background-color: rgba(110, 118, 129, 0.2);
+            color: var(--color-fg-default);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+        }
+
+        /* Main Workspace Layout */
+        .gh-container {
+            max-width: 1440px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 24px;
+            flex: 1;
+        }
+
+        /* GitHub Box / Panel Component */
+        .gh-box {
+            background-color: var(--color-canvas-overlay);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .gh-box-header {
+            background-color: #161b22;
+            border-bottom: 1px solid var(--color-border-default);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .gh-box-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--color-fg-default);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .gh-box-body {
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Canvas Radar Spec */
+        .radar-wrapper {
+            position: relative;
+            width: 100%;
+            background-color: #0d1117;
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            overflow: hidden;
         }
 
         canvas {
+            display: block;
             width: 100%;
             height: 520px;
-            background: #03060c;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: radial-gradient(circle at center, #161b22 0%, #0d1117 80%);
         }
 
-        .sidebar {
+        .radar-controls-overlay {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
             display: flex;
-            flex-direction: column;
-            gap: 20px;
+            gap: 8px;
+            background: rgba(22, 27, 34, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            padding: 4px;
         }
 
-        .card {
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .card-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 14px;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .stat-box {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 10px;
-            padding: 14px;
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 800;
-            font-family: var(--font-mono);
-            margin-bottom: 2px;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #64748b;
-        }
-
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 14px;
-        }
-
-        button {
-            background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(0, 119, 255, 0.15));
-            border: 1px solid var(--accent-cyan);
-            color: var(--text-main);
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-family: var(--font-main);
-            font-weight: 600;
-            font-size: 0.88rem;
+        /* GitHub Button Component */
+        .btn {
+            background-color: #21262d;
+            color: #c9d1d9;
+            border: 1px solid var(--color-border-default);
+            padding: 5px 12px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.15s ease;
+            font-family: var(--font-sans);
         }
 
-        button:hover {
-            background: linear-gradient(135deg, rgba(0, 242, 254, 0.3), rgba(0, 119, 255, 0.3));
-            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
-            transform: translateY(-1px);
+        .btn:hover {
+            background-color: #30363d;
+            border-color: #8b949e;
         }
 
-        .log-box {
-            background: #020408;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 12px;
+        .btn-primary {
+            background-color: var(--color-success-emphasis);
+            color: #ffffff;
+            border-color: rgba(240, 246, 252, 0.1);
+        }
+
+        .btn-primary:hover {
+            background-color: #2ea043;
+        }
+
+        .btn-danger {
+            background-color: #21262d;
+            color: var(--color-danger-fg);
+            border-color: rgba(248, 81, 73, 0.4);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--color-danger-emphasis);
+            color: #ffffff;
+        }
+
+        .btn-sm {
+            padding: 3px 8px;
+            font-size: 0.75rem;
+        }
+
+        /* Metrics List (GitHub Summary Stats) */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background-color: var(--color-canvas-default);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            padding: 12px 14px;
+        }
+
+        .stat-card .label {
+            font-size: 0.75rem;
+            color: var(--color-fg-muted);
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        /* Timeline / Event Stream (GitHub Commit Feed Style) */
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-height: 280px;
+            overflow-y: auto;
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            background-color: var(--color-canvas-default);
+        }
+
+        .timeline-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--color-border-muted);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .icon-alert { background: rgba(248, 81, 73, 0.2); color: var(--color-danger-fg); border: 1px solid var(--color-danger-fg); }
+        .icon-info { background: rgba(88, 166, 255, 0.2); color: var(--color-accent-fg); border: 1px solid var(--color-accent-fg); }
+        .icon-success { background: rgba(46, 160, 67, 0.2); color: var(--color-success-fg); border: 1px solid var(--color-success-fg); }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-title {
+            color: var(--color-fg-default);
+            font-weight: 500;
+        }
+
+        .timeline-meta {
+            color: var(--color-fg-muted);
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            margin-top: 2px;
+        }
+
+        /* Legend Footer */
+        .legend-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.78rem;
+            color: var(--color-fg-muted);
+        }
+
+        .legend-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tag-square { width: 10px; height: 10px; background: var(--color-success-fg); border-radius: 2px; }
+        .tag-circle { width: 10px; height: 10px; background: var(--color-danger-fg); border-radius: 50%; }
+        .tag-dash { width: 16px; height: 2px; border-top: 2px dashed var(--color-accent-fg); }
+        .tag-dot { width: 6px; height: 6px; background: var(--color-fg-muted); border-radius: 50%; }
+
+        /* Code Block Styling */
+        .code-box {
+            background-color: var(--color-canvas-default);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            padding: 10px 12px;
             font-family: var(--font-mono);
             font-size: 0.75rem;
-            color: #38bdf8;
-            max-height: 180px;
-            overflow-y: auto;
-            white-space: pre-wrap;
+            color: var(--color-accent-fg);
+            overflow-x: auto;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <span class="brand-badge">REYCON</span>
-            <h1>Shared Perception 3D Command Dashboard</h1>
-        </div>
-        <div class="status-pill">
-            <span class="status-dot"></span>
-            <span>SYSTEM ACTIVE</span>
+    <!-- GitHub Top Header -->
+    <header class="gh-header">
+        <a href="https://github.com/shnkdev404/Reycon-Meta-Glasses" class="gh-brand" target="_blank">
+            <svg class="gh-octicon" height="24" viewBox="0 0 16 16" width="24"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
+            <div class="gh-repo-path">
+                <span class="owner">shnkdev404</span>
+                <span class="divider">/</span>
+                <span class="repo">Reycon-Meta-Glasses</span>
+            </div>
+            <span class="gh-badge">Public</span>
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <span class="gh-badge" style="font-family: var(--font-mono);">
+                <svg height="12" viewBox="0 0 16 16" width="12" fill="currentColor"><path d="M11.75 2.5a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5zm-2.25.75a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0zM2.5 7.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5zm-2.25.75a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0zm11.5 4.25a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5zm-2.25.75a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0z"></path></svg>
+                main
+            </span>
+            <div class="gh-badge badge-success">
+                <span class="status-dot"></span>
+                <span>Shared Perception Engine Active</span>
+            </div>
         </div>
     </header>
 
-    <main>
-        <div class="canvas-container">
-            <div class="canvas-header">
-                <h2>Spatial Collaboration Radar</h2>
-                <div class="legend">
-                    <div class="legend-item"><span class="square-icon"></span> Glass Position</div>
-                    <div class="legend-item"><span class="circle-icon"></span> Threat Object</div>
-                    <div class="legend-item"><span class="line-icon"></span> Collaboration Link</div>
-                    <div class="legend-item"><span class="dot-icon"></span> Persistent Landmark</div>
+    <!-- Sub-header Navigation Tabs -->
+    <nav class="gh-tabs-bar">
+        <a class="gh-tab active" href="#">
+            <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8z"></path></svg>
+            3D Spatial Radar
+            <span class="gh-counter" id="tabGlassesCount">0</span>
+        </a>
+        <a class="gh-tab" href="/server">
+            <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M1.75 1.5a.75.75 0 0 0-.75.75v11.5c0 .414.336.75.75.75h12.5a.75.75 0 0 0 .75-.75V2.25a.75.75 0 0 0-.75-.75H1.75zM12.5 13H3.5V3h9v10z"></path></svg>
+            Server Command Center
+        </a>
+        <a class="gh-tab" href="/mobile" target="_blank">
+            <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M4 1.75C4 .784 4.784 0 5.75 0h4.5C11.216 0 12 .784 12 1.75v12.5A1.75 1.75 0 0 1 10.25 16h-4.5A1.75 1.75 0 0 1 4 14.25V1.75zM5.75 1.5a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h4.5a.25.25 0 0 0 .25-.25V1.75a.25.25 0 0 0-.25-.25h-4.5z"></path></svg>
+            Mobile AR HUD Client
+        </a>
+    </nav>
+
+    <!-- Main Workspace Layout -->
+    <div class="gh-container">
+        
+        <!-- Left Panel: 3D Spatial Radar Viewport -->
+        <div class="gh-box">
+            <div class="gh-box-header">
+                <div class="gh-box-title">
+                    <svg height="16" viewBox="0 0 16 16" width="16" fill="var(--color-accent-fg)"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"></path></svg>
+                    Collaborative Perception Radar Viewport
+                </div>
+                <div class="legend-bar">
+                    <div class="legend-tag"><span class="tag-square"></span> Glass Device</div>
+                    <div class="legend-tag"><span class="tag-circle"></span> Threat Hazard</div>
+                    <div class="legend-tag"><span class="tag-dash"></span> Collab Link</div>
+                    <div class="legend-tag"><span class="tag-dot"></span> Landmark</div>
                 </div>
             </div>
-            <canvas id="radarCanvas"></canvas>
+            <div class="gh-box-body" style="padding: 12px;">
+                <div class="radar-wrapper">
+                    <canvas id="radarCanvas"></canvas>
+                    <div class="radar-controls-overlay">
+                        <button class="btn btn-sm" onclick="zoomIn()">Zoom +</button>
+                        <button class="btn btn-sm" onclick="zoomOut()">Zoom -</button>
+                        <button class="btn btn-sm" onclick="resetZoom()">Center</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="sidebar">
-            <div class="card">
-                <div class="card-title">Shared Intelligence Metrics</div>
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <div class="stat-value" id="statGlasses" style="color: var(--accent-green);">0</div>
-                        <div class="stat-label">Active Glasses</div>
+        <!-- Right Panel: Insights & Actions -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+
+            <!-- Summary Insights Box -->
+            <div class="gh-box">
+                <div class="gh-box-header">
+                    <div class="gh-box-title">
+                        <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-1 1v1h1.75a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75V2.5z"></path></svg>
+                        Shared Intelligence Metrics
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="statThreats" style="color: var(--accent-red);">0</div>
-                        <div class="stat-label">Active Hazards</div>
+                </div>
+                <div class="gh-box-body">
+                    <div class="stats-summary">
+                        <div class="stat-card">
+                            <div class="label">GLASSES <span style="color: var(--color-success-fg);">●</span></div>
+                            <div class="value" id="statGlasses" style="color: var(--color-success-fg);">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">HAZARDS <span style="color: var(--color-danger-fg);">●</span></div>
+                            <div class="value" id="statThreats" style="color: var(--color-danger-fg);">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">LANDMARKS</div>
+                            <div class="value" id="statMapPoints" style="color: var(--color-fg-muted);">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="label">KEYFRAMES</div>
+                            <div class="value" id="statKeyframes" style="color: var(--color-accent-fg);">0</div>
+                        </div>
                     </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="statMapPoints" style="color: var(--accent-gray);">0</div>
-                        <div class="stat-label">Map Landmarks</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value" id="statKeyframes" style="color: var(--accent-cyan);">0</div>
-                        <div class="stat-label">SLAM Keyframes</div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn btn-primary" onclick="simulateGlassesDemo()" style="width: 100%; justify-content: center;">
+                            🚀 Trigger Multi-Glass Perception Stream
+                        </button>
+                        <button class="btn btn-danger" onclick="resetServerState()" style="width: 100%; justify-content: center;">
+                            🗑️ Reset Shared World State
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-title">Simulation Controls</div>
-                <div class="btn-group">
-                    <button onclick="simulateGlassesDemo()">🚀 Trigger Glass A & Glass B Telemetry</button>
-                    <button onclick="fetchWorldState()">🔄 Refresh World State</button>
-                    <button onclick="resetServerState()" style="border-color: var(--accent-red); color: var(--accent-red);">🗑️ Reset Shared World</button>
+            <!-- Activity Stream (GitHub Commit Feed Format) -->
+            <div class="gh-box" style="flex: 1;">
+                <div class="gh-box-header">
+                    <div class="gh-box-title">
+                        <svg height="16" viewBox="0 0 16 16" width="16" fill="currentColor"><path d="M1.5 8a6.5 6.5 0 1 1 13 0 6.5 6.5 0 0 1-13 0zM8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm.5 4.75a.75.75 0 0 0-1.5 0v3.5c0 .414.336.75.75.75h2.5a.75.75 0 0 0 0-1.5H8.5V4.75z"></path></svg>
+                        Perception Activity Timeline
+                    </div>
+                    <button class="btn btn-sm" onclick="fetchWorldState()">Refresh</button>
+                </div>
+                <div class="gh-box-body">
+                    <div class="timeline" id="eventTimeline">
+                        <div class="timeline-item">
+                            <div class="timeline-icon icon-info">i</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">System initialized cleanly</div>
+                                <div class="timeline-meta">Listening for WebSocket telemetry...</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-title">Live Event Stream</div>
-                <div class="log-box" id="eventLog">System ready. Polling /api/shared/world_state...</div>
-            </div>
         </div>
-    </main>
+
+    </div>
 
     <script>
         const canvas = document.getElementById('radarCanvas');
         const ctx = canvas.getContext('2d');
 
+        let zoomScale = 12; // 12px per meter default
+
         function resizeCanvas() {
-            canvas.width = canvas.parentElement.clientWidth - 40;
+            canvas.width = canvas.parentElement.clientWidth;
             canvas.height = 520;
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
+
+        function zoomIn() { zoomScale = Math.min(30, zoomScale + 3); drawRadar(); }
+        function zoomOut() { zoomScale = Math.max(4, zoomScale - 3); drawRadar(); }
+        function resetZoom() { zoomScale = 12; drawRadar(); }
 
         let worldData = {
             glasses: {},
@@ -363,50 +578,52 @@
         }
 
         function updateUI() {
-            // Metrics
-            document.getElementById('statGlasses').innerText = Object.keys(worldData.glasses).length;
+            const glassCount = Object.keys(worldData.glasses).length;
+            document.getElementById('statGlasses').innerText = glassCount;
+            document.getElementById('tabGlassesCount').innerText = glassCount;
             document.getElementById('statThreats').innerText = worldData.threats.length;
             document.getElementById('statMapPoints').innerText = worldData.map_points.length;
             document.getElementById('statKeyframes').innerText = (worldData.stats && worldData.stats.total_keyframes) || 0;
 
             drawRadar();
+            updateTimeline();
         }
 
         function drawRadar() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
-            const scale = 12; // 1 meter = 12 pixels
 
-            // Draw grid & concentric radar circles
-            ctx.strokeStyle = 'rgba(0, 242, 254, 0.08)';
+            // Draw concentric range circles (GitHub style dark gray grid)
+            ctx.strokeStyle = '#21262d';
             ctx.lineWidth = 1;
-            for (let r = 50; r <= 350; r += 50) {
+            for (let r = 40; r <= 400; r += 40) {
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
                 ctx.stroke();
             }
 
             // Crosshair
+            ctx.strokeStyle = '#30363d';
             ctx.beginPath();
             ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height);
             ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY);
             ctx.stroke();
 
-            // 1. Draw Persistent Map Points (Gray Dots)
-            ctx.fillStyle = '#94a3b8';
+            // 1. Render SLAM Landmark Points (Gray Dots)
+            ctx.fillStyle = '#8b949e';
             worldData.map_points.forEach(pt => {
                 const pos = pt.position || pt;
-                const px = centerX + (pos.x * scale);
-                const py = centerY - (pos.y * scale);
+                const px = centerX + (pos.x * zoomScale);
+                const py = centerY - (pos.y * zoomScale);
                 ctx.beginPath();
-                ctx.arc(px, py, 3, 0, Math.PI * 2);
+                ctx.arc(px, py, 2.5, 0, Math.PI * 2);
                 ctx.fill();
             });
 
-            // 2. Draw Collaboration Graph (Cyan Dashed Lines between glasses < 50m)
+            // 2. Render Collaboration Links (Dashed Cyan Lines between glasses < 50m)
             const glassList = Object.values(worldData.glasses);
-            ctx.strokeStyle = '#00f2fe';
+            ctx.strokeStyle = '#58a6ff';
             ctx.setLineDash([4, 4]);
             ctx.lineWidth = 1.5;
             for (let i = 0; i < glassList.length; i++) {
@@ -418,66 +635,104 @@
                     const dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist <= 50.0) {
                         ctx.beginPath();
-                        ctx.moveTo(centerX + (g1.x * scale), centerY - (g1.y * scale));
-                        ctx.lineTo(centerX + (g2.x * scale), centerY - (g2.y * scale));
+                        ctx.moveTo(centerX + (g1.x * zoomScale), centerY - (g1.y * zoomScale));
+                        ctx.lineTo(centerX + (g2.x * zoomScale), centerY - (g2.y * zoomScale));
                         ctx.stroke();
                     }
                 }
             }
-            ctx.setLineDash([]); // Reset dashed line
+            ctx.setLineDash([]);
 
-            // 3. Draw Threats (Red Circles)
+            // 3. Render Threats (Red Pulsing Circles)
             worldData.threats.forEach(th => {
                 const pos = th.position;
-                const tx = centerX + (pos.x * scale);
-                const ty = centerY - (pos.y * scale);
+                const tx = centerX + (pos.x * zoomScale);
+                const ty = centerY - (pos.y * zoomScale);
 
-                // Pulse circle
-                ctx.fillStyle = 'rgba(255, 23, 68, 0.2)';
+                // Pulse ring
+                ctx.fillStyle = 'rgba(248, 81, 73, 0.25)';
                 ctx.beginPath();
-                ctx.arc(tx, ty, 16, 0, Math.PI * 2);
+                ctx.arc(tx, ty, 15, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Core dot
-                ctx.fillStyle = '#ff1744';
+                // Core red dot
+                ctx.fillStyle = '#f85149';
                 ctx.beginPath();
-                ctx.arc(tx, ty, 7, 0, Math.PI * 2);
+                ctx.arc(tx, ty, 6, 0, Math.PI * 2);
                 ctx.fill();
 
                 // Label
-                ctx.fillStyle = '#ff1744';
-                ctx.font = '11px "JetBrains Mono"';
+                ctx.fillStyle = '#f85149';
+                ctx.font = '600 11px "JetBrains Mono"';
                 ctx.fillText(`🚨 ${th.type} (${th.detected_by || 'shared'})`, tx + 10, ty + 4);
             });
 
-            // 4. Draw Glasses (Green Squares)
+            // 4. Render Glass Devices (Green Squares)
             glassList.forEach(g => {
                 const pos = g.position;
-                const gx = centerX + (pos.x * scale);
-                const gy = centerY - (pos.y * scale);
+                const gx = centerX + (pos.x * zoomScale);
+                const gy = centerY - (pos.y * zoomScale);
 
-                ctx.fillStyle = '#00e676';
-                ctx.fillRect(gx - 7, gy - 7, 14, 14);
+                ctx.fillStyle = '#3fb950';
+                ctx.fillRect(gx - 6, gy - 6, 12, 12);
 
-                ctx.fillStyle = '#00e676';
-                ctx.font = '12px "Outfit"';
+                ctx.fillStyle = '#3fb950';
+                ctx.font = '600 12px "Inter"';
                 ctx.fillText(`🕶️ ${g.id}`, gx + 10, gy + 4);
             });
         }
 
+        function updateTimeline() {
+            const container = document.getElementById('eventTimeline');
+            let html = '';
+
+            if (worldData.threats.length === 0 && Object.keys(worldData.glasses).length === 0) {
+                html = `
+                    <div class="timeline-item">
+                        <div class="timeline-icon icon-info">i</div>
+                        <div class="timeline-content">
+                            <div class="timeline-title">Waiting for device telemetry</div>
+                            <div class="timeline-meta">Click "Trigger Multi-Glass Perception Stream" above</div>
+                        </div>
+                    </div>`;
+            } else {
+                worldData.threats.forEach(t => {
+                    html += `
+                        <div class="timeline-item">
+                            <div class="timeline-icon icon-alert">🚨</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Hazard Detected: <strong>${t.type}</strong></div>
+                                <div class="timeline-meta">Detected by ${t.detected_by || 'system'} at (${t.position.x}m, ${t.position.y}m)</div>
+                            </div>
+                        </div>`;
+                });
+
+                Object.values(worldData.glasses).forEach(g => {
+                    html += `
+                        <div class="timeline-item">
+                            <div class="timeline-icon icon-success">🕶️</div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Glass Connected: <strong>${g.id}</strong></div>
+                                <div class="timeline-meta">Pose synced at (${g.position.x}m, ${g.position.y}m)</div>
+                            </div>
+                        </div>`;
+                });
+            }
+
+            container.innerHTML = html;
+        }
+
         async function simulateGlassesDemo() {
-            logEvent("🚀 Simulating Glass A & Glass B Telemetry...");
             const wsA = new WebSocket(`ws://${location.host}/ws/glass/glass_a`);
             const wsB = new WebSocket(`ws://${location.host}/ws/glass/glass_b`);
 
             wsA.onopen = () => {
                 wsA.send(JSON.stringify({
                     type: "telemetry",
-                    position: { x: -10, y: 15, z: 0 },
-                    detections: [],
+                    position: { x: -8, y: 12, z: 0 },
                     map_points: [
-                        { point_id: "lm_1", position: { x: -12, y: 18, z: 0 } },
-                        { point_id: "lm_2", position: { x: -8, y: 12, z: 0 } }
+                        { point_id: "lm_1", position: { x: -10, y: 15, z: 0 } },
+                        { point_id: "lm_2", position: { x: -6, y: 10, z: 0 } }
                     ]
                 }));
             };
@@ -485,12 +740,12 @@
             wsB.onopen = () => {
                 wsB.send(JSON.stringify({
                     type: "telemetry",
-                    position: { x: 15, y: 20, z: 0 },
+                    position: { x: 12, y: 16, z: 0 },
                     detections: [
-                        { object_type: "forklift", position: { x: 18, y: 25, z: 0 }, confidence: 0.95 }
+                        { object_type: "truck", position: { x: 15, y: 20, z: 0 }, confidence: 0.95 }
                     ],
                     map_points: [
-                        { point_id: "lm_3", position: { x: 20, y: 22, z: 0 } }
+                        { point_id: "lm_3", position: { x: 16, y: 18, z: 0 } }
                     ]
                 }));
             };
@@ -500,17 +755,10 @@
 
         async function resetServerState() {
             await fetch('/api/shared/reset', { method: 'POST' });
-            logEvent("🗑️ Server state reset.");
             fetchWorldState();
         }
 
-        function logEvent(msg) {
-            const box = document.getElementById('eventLog');
-            const time = new Date().toLocaleTimeString();
-            box.innerText = `[${time}] ${msg}\n` + box.innerText;
-        }
-
-        // Auto-poll state every 2 seconds
+        // Auto polling every 2 seconds
         setInterval(fetchWorldState, 2000);
         fetchWorldState();
     </script>
