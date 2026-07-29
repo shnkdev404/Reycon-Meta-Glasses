@@ -24,7 +24,7 @@ ssl_context.verify_mode = ssl.CERT_NONE
 async def connect_ws_helper(endpoint_path):
     for uri, ssl_param in [(f"wss://127.0.0.1:8000{endpoint_path}", ssl_context), (f"ws://127.0.0.1:8000{endpoint_path}", None)]:
         try:
-            ws = await websockets.connect(uri, ssl=ssl_param, ping_interval=10, ping_timeout=10)
+            ws = await websockets.connect(uri, ssl=ssl_param, ping_interval=None, ping_timeout=None)
             return ws
         except Exception:
             continue

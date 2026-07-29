@@ -1,7 +1,12 @@
 """
 Shared Perception Safety System - Central Server Main App.
 """
+import sys
 import os
+
+# Ensure workspace root is in sys.path when executed directly as `python app/main.py`
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles

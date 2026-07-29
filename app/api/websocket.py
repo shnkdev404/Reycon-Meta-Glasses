@@ -73,7 +73,26 @@ async def websocket_mobile_endpoint(websocket: WebSocket):
                 except Exception as ex:
                     logger.error(f"Async frame detection error for '{glass_id}': {ex}")
 
-            detections = last_detections
+            if frame_b64:
+                detections = last_detections
+            else:
+                raw_dets = data.get("detections", [])
+                if isinstance(raw_dets, list) and raw_dets:
+                    from app.models import Detection
+                    parsed_dets = []
+                    for d in raw_dets:
+                        if isinstance(d, dict):
+                            parsed_dets.append(Detection(
+                                label=d.get("label", d.get("class_name", d.get("object_type", "truck"))),
+                                confidence=float(d.get("confidence", 0.9)),
+                                distance=float(d.get("distance", 5.0)),
+                                bbox=d.get("bbox", [0, 0, 100, 100])
+                            ))
+                        else:
+                            parsed_dets.append(d)
+                    detections = parsed_dets
+                else:
+                    detections = []
 
             # Parse optional GPS location coordinates
             gps_location = None
@@ -113,6 +132,18 @@ async def websocket_mobile_endpoint(websocket: WebSocket):
 
             # Update world state and calculate spatial radar blips and threats
             spatial_update = world_manager.update_glass(glass_state)
+
+            # Sync with SharedWorldManager
+            from app.services.shared_world_manager import world_manager as shared_wm, Position3D
+            shared_wm.update_glass_pose(glass_id, np.eye(4), Position3D(position.x, position.y, position.z))
+            for d in detections:
+                shared_wm.add_threat(
+                    threat_id=f"threat_{glass_id}_{int(time.time())}",
+                    object_type=getattr(d, 'label', getattr(d, 'class_name', 'truck')),
+                    position=Position3D(position.x + getattr(d, 'distance', 5.0), position.y, position.z),
+                    detected_by_glass_id=glass_id,
+                    confidence=getattr(d, 'confidence', 0.9)
+                )
 
             # Build response packet for transmitting client
             response_payload = {
