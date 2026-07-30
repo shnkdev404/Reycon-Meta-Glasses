@@ -468,6 +468,8 @@
                             <button class="btn btn-sm" onclick="zoomIn()">Zoom +</button>
                             <button class="btn btn-sm" onclick="zoomOut()">Zoom -</button>
                             <button class="btn btn-sm" onclick="resetZoom()">Center</button>
+                            <button class="btn btn-sm" id="btnToggleTrails" onclick="toggleTrails()">Trails [ON]</button>
+                            <button class="btn btn-sm" id="btnToggleVectors" onclick="toggleVectors()">Vectors [ON]</button>
                         </div>
                     </div>
                 </div>
@@ -546,19 +548,20 @@
             <!-- Connected Phones Matrix Panel -->
             <div class="gh-box">
                 <div class="gh-box-header">
-                    <div class="gh-box-title">📱 Connected Phones & Devices Locations</div>
+                    <div class="gh-box-title">📱 Connected Devices & Navigation Matrix</div>
                 </div>
                 <div class="gh-box-body" style="padding: 12px;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.78rem; font-family: var(--font-mono);">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--color-border-default);">
                                 <th style="padding: 6px; text-align: left; color: var(--color-fg-muted);">PHONE ID</th>
-                                <th style="padding: 6px; text-align: left; color: var(--color-fg-muted);">EXACT POSITION (X, Y, Z)</th>
+                                <th style="padding: 6px; text-align: left; color: var(--color-fg-muted);">POSITION (X, Y, Z)</th>
                                 <th style="padding: 6px; text-align: left; color: var(--color-fg-muted);">HEADING</th>
+                                <th style="padding: 6px; text-align: left; color: var(--color-fg-muted);">TRACK</th>
                             </tr>
                         </thead>
                         <tbody id="connectedPhonesTable">
-                            <tr><td colspan="3" style="padding: 8px; text-align: center; color: var(--color-fg-muted);">No active phones connected</td></tr>
+                            <tr><td colspan="4" style="padding: 8px; text-align: center; color: var(--color-fg-muted);">No active phones connected</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -595,6 +598,12 @@
         const ctx = canvas.getContext('2d');
 
         let zoomScale = 12; // 12px per meter default
+        let showTrails = true;
+        let showVectors = true;
+        let focusedDeviceId = null;
+
+        // Device trajectory movement history store: { [gid]: [ {x, y, time}, ... ] }
+        const deviceTrajectories = {};
 
         function resizeCanvas() {
             canvas.width = canvas.parentElement.clientWidth;
@@ -603,9 +612,30 @@
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        function zoomIn() { zoomScale = Math.min(30, zoomScale + 3); drawRadar(); }
+        function zoomIn() { zoomScale = Math.min(35, zoomScale + 3); drawRadar(); }
         function zoomOut() { zoomScale = Math.max(4, zoomScale - 3); drawRadar(); }
-        function resetZoom() { zoomScale = 12; drawRadar(); }
+        function resetZoom() { zoomScale = 12; focusedDeviceId = null; drawRadar(); }
+        function toggleTrails() {
+            showTrails = !showTrails;
+            document.getElementById('btnToggleTrails').innerText = `Trails [${showTrails ? 'ON' : 'OFF'}]`;
+            drawRadar();
+        }
+        function toggleVectors() {
+            showVectors = !showVectors;
+            document.getElementById('btnToggleVectors').innerText = `Vectors [${showVectors ? 'ON' : 'OFF'}]`;
+            drawRadar();
+        }
+        function focusOnDevice(gid) {
+            focusedDeviceId = gid;
+            drawRadar();
+        }
+
+        function getCardinalDirection(headingDeg) {
+            const deg = (headingDeg % 360 + 360) % 360;
+            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+            const index = Math.round(deg / 45) % 8;
+            return `${Math.round(deg)}° ${directions[index]}`;
+        }
 
         let worldData = {
             glasses: {},
@@ -632,15 +662,34 @@
             const glassList = Object.values(glassesDict);
             const glassCount = glassList.length;
             const memoryObjs = worldData.persistent_objects || [];
+            const threats = worldData.threats || [];
+
+            // Update trajectory breadcrumbs for connected devices
+            const now = Date.now();
+            glassList.forEach(g => {
+                const gid = g.id;
+                const pos = g.position || {x: 0, y: 0, z: 0};
+                if (!deviceTrajectories[gid]) deviceTrajectories[gid] = [];
+                const traj = deviceTrajectories[gid];
+                if (traj.length === 0 || Math.abs(traj[traj.length - 1].x - pos.x) > 0.05 || Math.abs(traj[traj.length - 1].y - pos.y) > 0.05) {
+                    traj.push({ x: pos.x, y: pos.y, time: now });
+                    if (traj.length > 50) traj.shift();
+                }
+            });
+
+            // Count unique objects: persistent objects + threats not in persistent objects
+            const persistentIds = new Set(memoryObjs.map(m => m.object_id));
+            const uniqueThreatObjs = threats.filter(t => !persistentIds.has(t.threat_id));
+            const totalMemoryObjs = memoryObjs.length + uniqueThreatObjs.length;
 
             document.getElementById('statGlasses').innerText = glassCount;
             document.getElementById('tabGlassesCount').innerText = glassCount;
-            document.getElementById('statMemoryObjs').innerText = memoryObjs.length;
-            document.getElementById('statThreats').innerText = worldData.threats.length;
+            document.getElementById('statMemoryObjs').innerText = totalMemoryObjs;
+            document.getElementById('statThreats').innerText = threats.length;
             document.getElementById('statMapPoints').innerText = worldData.map_points.length;
 
             renderConnectedPhonesTable(glassesDict);
-            renderPersistentMemoryTable(memoryObjs);
+            renderPersistentMemoryTable(memoryObjs, uniqueThreatObjs);
             drawRadar();
             updateTimeline();
         }
@@ -649,7 +698,7 @@
             const tbody = document.getElementById('connectedPhonesTable');
             const keys = Object.keys(glasses);
             if (keys.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="padding: 8px; text-align: center; color: var(--color-fg-muted);">No active phones connected</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" style="padding: 8px; text-align: center; color: var(--color-fg-muted);">No active phones connected</td></tr>';
                 return;
             }
 
@@ -658,32 +707,59 @@
                 const g = glasses[gid];
                 const pos = g.position || {x:0, y:0, z:0};
                 const posStr = g.formatted_position || `X: ${(pos.x||0).toFixed(2)}m, Y: ${(pos.y||0).toFixed(2)}m, Z: ${(pos.z||0).toFixed(2)}m`;
+                const headingStr = getCardinalDirection(g.heading || 0);
+                const isTracked = focusedDeviceId === gid;
                 html += `
                     <tr style="border-bottom: 1px solid var(--color-border-muted);">
                         <td style="padding: 6px; color: var(--color-success-fg); font-weight: 600;">📱 ${gid}</td>
                         <td style="padding: 6px;">${posStr}</td>
-                        <td style="padding: 6px;">${Math.round(g.heading || 0)}°</td>
+                        <td style="padding: 6px; font-weight: 600; color: var(--color-accent-fg);">${headingStr}</td>
+                        <td style="padding: 6px;">
+                            <button class="btn btn-sm" style="${isTracked ? 'background: var(--color-accent-emphasis); color: #fff;' : ''}" onclick="focusOnDevice('${gid}')">🎯 ${isTracked ? 'Tracking' : 'Track'}</button>
+                        </td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html;
         }
 
-        function renderPersistentMemoryTable(memoryObjs) {
+        function renderPersistentMemoryTable(memoryObjs, threatObjs) {
             const tbody = document.getElementById('persistentMemoryTable');
-            if (!memoryObjs || memoryObjs.length === 0) {
+            const allObjs = [...(memoryObjs || [])];
+
+            if (threatObjs && threatObjs.length > 0) {
+                threatObjs.forEach(t => {
+                    allObjs.push({
+                        object_id: t.threat_id,
+                        label: t.type || t.class_name || 'object',
+                        position: t.position || {x:0, y:0, z:0},
+                        detected_by: t.detected_by || t.glass_id || 'phone',
+                        confidence: t.confidence || 0.85,
+                        is_corrected: false,
+                        _is_live_threat: true
+                    });
+                });
+            }
+
+            if (!allObjs || allObjs.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="padding: 12px; text-align: center; color: var(--color-fg-muted);">No objects recorded in persistent memory store</td></tr>';
                 return;
             }
 
             let html = '';
-            memoryObjs.forEach(obj => {
+            allObjs.forEach(obj => {
                 const pos = obj.position || {x:0, y:0, z:0};
                 const posStr = `X: ${(pos.x||0).toFixed(2)}m, Y: ${(pos.y||0).toFixed(2)}m, Z: ${(pos.z||0).toFixed(2)}m`;
                 const isCorrected = obj.is_corrected;
-                const labelDisplay = isCorrected 
-                    ? `<span style="color: var(--color-attention-fg); font-weight: 700;">${obj.label}</span> <span style="background: rgba(210,153,34,0.15); color: var(--color-attention-fg); border: 1px solid rgba(210,153,34,0.3); padding: 1px 4px; border-radius: 4px; font-size: 0.65rem;">CORRECTED</span>` 
-                    : `<span style="color: var(--color-accent-fg); font-weight: 600;">${obj.label}</span>`;
+                const isLive = obj._is_live_threat;
+                let labelDisplay;
+                if (isCorrected) {
+                    labelDisplay = `<span style="color: var(--color-attention-fg); font-weight: 700;">${obj.label}</span> <span style="background: rgba(210,153,34,0.15); color: var(--color-attention-fg); border: 1px solid rgba(210,153,34,0.3); padding: 1px 4px; border-radius: 4px; font-size: 0.65rem;">CORRECTED</span>`;
+                } else if (isLive) {
+                    labelDisplay = `<span style="color: var(--color-success-fg); font-weight: 600;">${obj.label}</span> <span style="background: rgba(63,185,80,0.15); color: var(--color-success-fg); border: 1px solid rgba(63,185,80,0.3); padding: 1px 4px; border-radius: 4px; font-size: 0.65rem;">LIVE</span>`;
+                } else {
+                    labelDisplay = `<span style="color: var(--color-accent-fg); font-weight: 600;">${obj.label}</span>`;
+                }
 
                 html += `
                     <tr style="border-bottom: 1px solid var(--color-border-muted);">
@@ -725,37 +801,55 @@
 
         function drawRadar() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
+            let centerX = canvas.width / 2;
+            let centerY = canvas.height / 2;
 
-            // Draw concentric range circles (GitHub style dark gray grid)
+            const glassList = Object.values(worldData.glasses || {});
+
+            // If a specific device is tracked, center canvas on that device's position
+            if (focusedDeviceId && worldData.glasses[focusedDeviceId]) {
+                const fPos = worldData.glasses[focusedDeviceId].position || {x: 0, y: 0};
+                centerX -= (fPos.x * zoomScale);
+                centerY += (fPos.y * zoomScale);
+            }
+
+            // Draw concentric range circles (Grid & Distance Tags)
             ctx.strokeStyle = '#21262d';
             ctx.lineWidth = 1;
             ctx.fillStyle = '#484f58';
             ctx.font = '10px "JetBrains Mono"';
             
-            for (let meters = 5; meters <= 40; meters += 5) {
+            for (let meters = 5; meters <= 45; meters += 5) {
                 const r = meters * zoomScale;
-                if (r > Math.max(canvas.width, canvas.height)) break;
+                if (r > Math.max(canvas.width, canvas.height) * 1.5) break;
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
                 ctx.stroke();
-                // Distance indicator tag
                 ctx.fillText(`${meters}m`, centerX + r + 4, centerY - 4);
             }
 
-            // Crosshair
+            // Central Server Anchor Crosshair at (0, 0)
             ctx.strokeStyle = '#30363d';
+            ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(centerX, 0); ctx.lineTo(centerX, canvas.height);
             ctx.moveTo(0, centerY); ctx.lineTo(canvas.width, centerY);
             ctx.stroke();
 
-            // Track placed text label bounding boxes to prevent overlapping text
+            // Render Server Origin Anchor Icon
+            ctx.fillStyle = 'rgba(88, 166, 255, 0.2)';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#58a6ff';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+            ctx.fill();
+
             const placedLabels = [];
 
             function drawSmartLabel(text, targetX, targetY, color, isAlert = false) {
-                ctx.font = isAlert ? '600 11px "JetBrains Mono"' : '600 12px "Inter"';
+                ctx.font = isAlert ? '600 11px "JetBrains Mono"' : '600 11px "Inter"';
                 const metrics = ctx.measureText(text);
                 const padding = 4;
                 const width = metrics.width + (padding * 2);
@@ -764,7 +858,6 @@
                 let labelX = targetX + 12;
                 let labelY = targetY - 8;
 
-                // Adjust label position if it collides with an existing label
                 let attempts = 0;
                 while (attempts < 6) {
                     let collision = false;
@@ -780,14 +873,12 @@
                         }
                     }
                     if (!collision) break;
-                    labelY += 18; // Stagger downward
+                    labelY += 18;
                     attempts++;
                 }
 
-                // Record label bounding box
                 placedLabels.push({ x: labelX, y: labelY, w: width, h: height });
 
-                // Draw background pill box for maximum readability
                 ctx.fillStyle = 'rgba(13, 17, 23, 0.9)';
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 1;
@@ -796,12 +887,95 @@
                 ctx.fill();
                 ctx.stroke();
 
-                // Draw text label
                 ctx.fillStyle = color;
                 ctx.fillText(text, labelX + padding, labelY + 12);
             }
 
-            // 1. Render Persistent Memory Store Objects (Amber/Gold Diamonds)
+            // 1. Render Device Movement Trajectory Breadcrumb Trails
+            if (showTrails) {
+                Object.keys(deviceTrajectories).forEach(gid => {
+                    const traj = deviceTrajectories[gid];
+                    if (!traj || traj.length < 2) return;
+
+                    ctx.beginPath();
+                    traj.forEach((pt, i) => {
+                        const px = centerX + (pt.x * zoomScale);
+                        const py = centerY - (pt.y * zoomScale);
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    });
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([3, 3]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    traj.forEach((pt, i) => {
+                        const px = centerX + (pt.x * zoomScale);
+                        const py = centerY - (pt.y * zoomScale);
+                        const alpha = ((i + 1) / traj.length) * 0.6;
+                        ctx.fillStyle = `rgba(56, 189, 248, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(px, py, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                });
+            }
+
+            // 2. Render Server Origin & Relative Navigation Vector Links
+            if (showVectors) {
+                glassList.forEach(g => {
+                    const pos = g.position || {x: 0, y: 0};
+                    const gx = centerX + (pos.x * zoomScale);
+                    const gy = centerY - (pos.y * zoomScale);
+                    const distServer = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
+
+                    if (distServer > 0.5) {
+                        ctx.strokeStyle = 'rgba(88, 166, 255, 0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([2, 4]);
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY);
+                        ctx.lineTo(gx, gy);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        const midX = (centerX + gx) / 2;
+                        const midY = (centerY + gy) / 2;
+                        ctx.font = '9px "JetBrains Mono"';
+                        ctx.fillStyle = 'rgba(88, 166, 255, 0.7)';
+                        ctx.fillText(`Server ➔ ${distServer.toFixed(1)}m`, midX, midY);
+                    }
+                });
+            }
+
+            // 3. Render Camera Sight Rays connecting Phone Cameras to Objects they see
+            const allObjs = [...(worldData.persistent_objects || []), ...(worldData.threats || [])];
+            allObjs.forEach(obj => {
+                const oPos = obj.position || {x:0, y:0};
+                const ox = centerX + (oPos.x * zoomScale);
+                const oy = centerY - (oPos.y * zoomScale);
+                const detId = obj.detected_by || obj.glass_id;
+                if (detId && glassList.length > 0) {
+                    const detGlass = glassList.find(g => g.id === detId);
+                    if (detGlass) {
+                        const gPos = detGlass.position || {x:0, y:0};
+                        const gx = centerX + (gPos.x * zoomScale);
+                        const gy = centerY - (gPos.y * zoomScale);
+
+                        ctx.strokeStyle = 'rgba(210, 153, 34, 0.4)';
+                        ctx.lineWidth = 1.2;
+                        ctx.setLineDash([3, 3]);
+                        ctx.beginPath();
+                        ctx.moveTo(gx, gy);
+                        ctx.lineTo(ox, oy);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+            });
+
+            // 4. Render Persistent Memory Store Objects (Amber/Gold Diamonds)
             const memoryObjs = worldData.persistent_objects || [];
             memoryObjs.forEach(m => {
                 const pos = m.position || {x:0, y:0, z:0};
@@ -821,7 +995,31 @@
                 drawSmartLabel(`${lbl} (X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m)`, mx, my, '#d29922', false);
             });
 
-            // 2. Render SLAM Landmark Points (Gray Dots)
+            // 4b. Render Active Live Threat Objects
+            const renderedPersistentIds = new Set(memoryObjs.map(m => m.object_id));
+            const activeThreatsAsObjects = (worldData.threats || []).filter(t => !renderedPersistentIds.has(t.threat_id));
+            activeThreatsAsObjects.forEach(t => {
+                const pos = t.position || {x:0, y:0, z:0};
+                const tx = centerX + (pos.x * zoomScale);
+                const ty = centerY - (pos.y * zoomScale);
+
+                ctx.fillStyle = '#e3a008';
+                ctx.beginPath();
+                ctx.moveTo(tx, ty - 7);
+                ctx.lineTo(tx + 7, ty);
+                ctx.lineTo(tx, ty + 7);
+                ctx.lineTo(tx - 7, ty);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#d29922';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                const lbl = `📡 ${t.type || t.class_name || 'object'} (${t.detected_by || 'phone'})`;
+                drawSmartLabel(`${lbl} (X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m)`, tx, ty, '#e3a008', false);
+            });
+
+            // 5. Render SLAM Landmark Points (Gray Dots)
             ctx.fillStyle = '#8b949e';
             worldData.map_points.forEach(pt => {
                 const pos = pt.position || pt;
@@ -832,35 +1030,48 @@
                 ctx.fill();
             });
 
-            // 3. Render Collaboration Links (Dashed Cyan Lines between glasses < 50m)
-            const glassList = Object.values(worldData.glasses);
+            // 6. Render Inter-Client Collaboration Links (Dashed Cyan Lines with Distance Tags)
             ctx.strokeStyle = '#58a6ff';
             ctx.setLineDash([4, 4]);
             ctx.lineWidth = 1.5;
             for (let i = 0; i < glassList.length; i++) {
                 for (let j = i + 1; j < glassList.length; j++) {
-                    const g1 = glassList[i].position;
-                    const g2 = glassList[j].position;
+                    const g1 = glassList[i].position || {x:0, y:0};
+                    const g2 = glassList[j].position || {x:0, y:0};
                     const dx = g1.x - g2.x;
                     const dy = g1.y - g2.y;
                     const dist = Math.sqrt(dx*dx + dy*dy);
                     if (dist <= 50.0) {
+                        const x1 = centerX + (g1.x * zoomScale);
+                        const y1 = centerY - (g1.y * zoomScale);
+                        const x2 = centerX + (g2.x * zoomScale);
+                        const y2 = centerY - (g2.y * zoomScale);
+
                         ctx.beginPath();
-                        ctx.moveTo(centerX + (g1.x * zoomScale), centerY - (g1.y * zoomScale));
-                        ctx.lineTo(centerX + (g2.x * zoomScale), centerY - (g2.y * zoomScale));
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
                         ctx.stroke();
+
+                        // Link Distance Tag
+                        if (showVectors) {
+                            const lx = (x1 + x2) / 2;
+                            const ly = (y1 + y2) / 2;
+                            ctx.font = '9px "JetBrains Mono"';
+                            ctx.fillStyle = '#58a6ff';
+                            ctx.fillText(`↔ ${dist.toFixed(1)}m`, lx + 2, ly - 2);
+                        }
                     }
                 }
             }
             ctx.setLineDash([]);
 
-            // 4. Render Glass Devices (Green Squares with Vision Cone FOV & Looking Direction)
+            // 7. Render Connected Phone Devices (Google Maps Style Pointer & Lens Cone)
             glassList.forEach((g, idx) => {
                 const pos = g.position || {x:0, y:0, z:0};
                 let gx = centerX + (pos.x * zoomScale);
                 let gy = centerY - (pos.y * zoomScale);
 
-                // Offset overlapping icons if multiple glasses share exact same spot
+                // Stagger overlapping markers if sharing exact same location
                 const overlappingCount = glassList.filter((og, oidx) => oidx < idx && Math.abs((og.position?.x||0) - pos.x) < 0.1 && Math.abs((og.position?.y||0) - pos.y) < 0.1).length;
                 if (overlappingCount > 0) {
                     const angle = (overlappingCount * 120) * Math.PI / 180;
@@ -869,65 +1080,85 @@
                 }
 
                 const headingDeg = g.heading || 0;
-                // Convert compass heading to canvas angle (0 deg = UP/North)
+                const cardinal = getCardinalDirection(headingDeg);
                 const headingRad = (headingDeg - 90) * Math.PI / 180;
 
-                // A. Render 60-degree Vision FOV Cone Wedge
-                const fovHalfAngle = Math.PI / 6; // 30 deg half angle (60 deg total FOV)
-                const fovRadius = 38;
-                
-                ctx.fillStyle = 'rgba(63, 185, 80, 0.18)';
-                ctx.strokeStyle = 'rgba(63, 185, 80, 0.5)';
-                ctx.lineWidth = 1;
+                // A. Google Maps Style Directional Sector / Beam Cone (Camera FOV beam)
+                const fovHalfAngle = Math.PI / 6; // 30° half angle (60° total FOV beam)
+                const fovRadius = 45;
+
+                const beamGradient = ctx.createRadialGradient(gx, gy, 4, gx, gy, fovRadius);
+                beamGradient.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+                beamGradient.addColorStop(0.7, 'rgba(56, 189, 248, 0.15)');
+                beamGradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+                ctx.fillStyle = beamGradient;
                 ctx.beginPath();
                 ctx.moveTo(gx, gy);
                 ctx.arc(gx, gy, fovRadius, headingRad - fovHalfAngle, headingRad + fovHalfAngle);
                 ctx.closePath();
                 ctx.fill();
+
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+                ctx.lineWidth = 1;
                 ctx.stroke();
 
-                // B. Render Facing Direction Vector Arrow Line
-                const arrowLength = 26;
-                const tipX = gx + arrowLength * Math.cos(headingRad);
-                const tipY = gy + arrowLength * Math.sin(headingRad);
-                ctx.strokeStyle = '#3fb950';
+                // B. Optical Camera Center Ray Line & Lens Reticle Dot
+                const rayLength = 30;
+                const tipX = gx + rayLength * Math.cos(headingRad);
+                const tipY = gy + rayLength * Math.sin(headingRad);
+
+                ctx.strokeStyle = '#38bdf8';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(gx, gy);
                 ctx.lineTo(tipX, tipY);
                 ctx.stroke();
 
-                ctx.fillStyle = '#3fb950';
+                ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
                 ctx.arc(tipX, tipY, 3, 0, Math.PI * 2);
                 ctx.fill();
-
-                // C. Render Glass Body Box
-                ctx.fillStyle = '#3fb950';
-                ctx.fillRect(gx - 6, gy - 6, 12, 12);
-                ctx.strokeStyle = '#ffffff';
+                ctx.strokeStyle = '#0284c7';
                 ctx.lineWidth = 1;
-                ctx.strokeRect(gx - 6, gy - 6, 12, 12);
+                ctx.stroke();
+
+                // C. Google Maps Style Location Marker Dot
+                // Pulsing blue halo
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+                ctx.beginPath();
+                ctx.arc(gx, gy, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                // White border circle
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(gx, gy, 7, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Solid blue location core
+                ctx.fillStyle = '#0284c7';
+                ctx.beginPath();
+                ctx.arc(gx, gy, 5, 0, Math.PI * 2);
+                ctx.fill();
 
                 const posStr = g.formatted_position || `X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m`;
-                const labelStr = `📱 Phone: ${g.id} (${posStr})`;
-                drawSmartLabel(labelStr, gx, gy, '#3fb950', false);
+                const labelStr = `📱 ${g.id} [${cardinal}] (${posStr})`;
+                drawSmartLabel(labelStr, gx, gy, '#38bdf8', false);
             });
 
-            // 5. Render Active Threats (Red Pulsing Circles)
+            // 8. Render Active Threats (Red Pulsing Circles)
             const activeThreats = (worldData.threats || []).slice(-15);
             activeThreats.forEach(th => {
                 const pos = th.position || {x:0, y:0, z:0};
                 const tx = centerX + (pos.x * zoomScale);
                 const ty = centerY - (pos.y * zoomScale);
 
-                // Pulse ring
                 ctx.fillStyle = 'rgba(248, 81, 73, 0.25)';
                 ctx.beginPath();
                 ctx.arc(tx, ty, 14, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Core red dot
                 ctx.fillStyle = '#f85149';
                 ctx.beginPath();
                 ctx.arc(tx, ty, 6, 0, Math.PI * 2);

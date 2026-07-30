@@ -406,6 +406,8 @@
                     </div>
                 </div>
 
+                <div id="mCameraWarningBanner" style="display: none; background: rgba(255, 77, 90, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 8px 10px; border-radius: 6px; font-size: 10px; font-family: var(--font-mono); text-align: center;"></div>
+
                 <div class="camera-viewport">
                     <video id="mWebcamFeed" class="camera-video" autoplay playsinline muted></video>
                     
@@ -619,6 +621,19 @@
         async function initCamera() {
             const v1 = document.getElementById('mWebcamFeed');
             const v2 = document.getElementById('mWebcamFeedFull');
+            const warningBanner = document.getElementById('mCameraWarningBanner');
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.warn("Camera API requires HTTPS connection or localhost.");
+                if (warningBanner) {
+                    warningBanner.style.display = 'block';
+                    warningBanner.innerHTML = "⚠️ Camera blocked by browser over HTTP.<br>Run <code>python run.py --ssl</code> and access via <b>HTTPS</b> to enable camera.";
+                }
+                return;
+            } else if (warningBanner) {
+                warningBanner.style.display = 'none';
+            }
+
             const constraints = {
                 video: {
                     facingMode: { ideal: currentFacingMode },
@@ -666,12 +681,41 @@
                 );
             }
 
+            // Use absolute compass heading for accurate direction
+            // Priority: 1) webkitCompassHeading (iOS) 2) deviceorientationabsolute (Android) 3) fallback alpha
+            let hasAbsoluteOrientation = false;
+
+            function handleOrientationEvent(evt) {
+                // iOS Safari provides webkitCompassHeading (true magnetic compass heading)
+                if (evt.webkitCompassHeading !== undefined && evt.webkitCompassHeading !== null) {
+                    currentHeading = Math.round(evt.webkitCompassHeading) % 360;
+                    updateGPSElements();
+                    return;
+                }
+                // For absolute events (Android), alpha IS the compass heading from North
+                if (evt.absolute === true && evt.alpha !== null) {
+                    currentHeading = Math.round(360 - evt.alpha) % 360;
+                    updateGPSElements();
+                    hasAbsoluteOrientation = true;
+                    return;
+                }
+                // Fallback: relative alpha (may not be from magnetic North)
+                if (!hasAbsoluteOrientation && evt.alpha !== null) {
+                    currentHeading = Math.round(360 - evt.alpha) % 360;
+                    updateGPSElements();
+                }
+            }
+
+            // Try absolute orientation first (Android Chrome)
             if (window.DeviceOrientationEvent) {
+                window.addEventListener("deviceorientationabsolute", (evt) => {
+                    hasAbsoluteOrientation = true;
+                    handleOrientationEvent(evt);
+                }, true);
+
+                // Also listen to regular deviceorientation as fallback
                 window.addEventListener("deviceorientation", (evt) => {
-                    if (evt.alpha !== null) {
-                        currentHeading = Math.round(360 - evt.alpha);
-                        updateGPSElements();
-                    }
+                    handleOrientationEvent(evt);
                 }, true);
             }
         }

@@ -11,17 +11,20 @@ from fastapi.responses import HTMLResponse
 
 router = APIRouter()
 
+SHARED_DASHBOARD_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "public", "shared_dashboard.html"))
 DASHBOARD_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "clients", "server_dashboard.html"))
 MOBILE_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "clients", "mobile_client.html"))
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
 @router.get("/server", response_class=HTMLResponse)
+@router.get("/shared", response_class=HTMLResponse)
 async def render_dashboard():
-    """Renders the REYCON Server Command Center Webpage."""
+    """Renders the REYCON Server Command Center & 3D Spatial Radar Webpage."""
+    target_file = SHARED_DASHBOARD_FILE if os.path.exists(SHARED_DASHBOARD_FILE) else DASHBOARD_FILE
     try:
-        if os.path.exists(DASHBOARD_FILE):
-            with open(DASHBOARD_FILE, "r", encoding="utf-8") as f:
+        if os.path.exists(target_file):
+            with open(target_file, "r", encoding="utf-8") as f:
                 content = f.read()
             return HTMLResponse(content=content)
     except Exception as e:

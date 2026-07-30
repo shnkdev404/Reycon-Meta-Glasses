@@ -122,7 +122,9 @@ async def websocket_mobile_endpoint(websocket: WebSocket):
                                     z=float(d.get("position", {}).get("z", 0.0)) if isinstance(d.get("position"), dict) else 0.0
                                 ),
                                 direction=d.get("direction", "FRONT"),
-                                bbox=d.get("bbox", [0, 0, 100, 100])
+                                bbox=d.get("bbox", [0, 0, 100, 100]),
+                                distance=float(d.get("distance", 5.0)),
+                                bearing=float(d.get("bearing", 0.0))
                             ))
                         else:
                             parsed_dets.append(d)
@@ -190,8 +192,6 @@ async def websocket_mobile_endpoint(websocket: WebSocket):
                     det_bearing = float(getattr(d, 'bearing', 0.0))
                     det_conf = float(getattr(d, 'confidence', 0.9))
                 clean_lbl = det_lbl.lower().split(" #")[0].strip()
-                if clean_lbl in ["person", "human", "laptop", "phone", "cell phone"]:
-                    continue
 
                 rad = math.radians((heading + det_bearing) % 360.0)
                 det_x = round(position.x + det_dist * math.sin(rad), 2)
@@ -210,12 +210,24 @@ async def websocket_mobile_endpoint(websocket: WebSocket):
 
 
             # Build response packet for transmitting client
+            det_list = []
+            for d in detections:
+                try:
+                    if hasattr(d, 'model_dump'):
+                        det_list.append(d.model_dump())
+                    elif isinstance(d, dict):
+                        det_list.append(d)
+                    else:
+                        det_list.append({'class_name': str(getattr(d, 'class_name', 'object')), 'confidence': float(getattr(d, 'confidence', 0.9))})
+                except Exception:
+                    det_list.append({'class_name': 'object', 'confidence': 0.9})
+
             response_payload = {
                 "status": "ok",
                 "glass_id": glass_id,
                 "heading": heading,
                 "gps": gps_location.model_dump() if gps_location else None,
-                "detections": [d.model_dump() for d in detections],
+                "detections": det_list,
                 "active_threats": spatial_update["threats"],
                 "radar_blips": spatial_update["radar_blips"],
                 "all_devices_gps": spatial_update["all_devices_gps"],

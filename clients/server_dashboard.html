@@ -1192,6 +1192,7 @@
         async function initWebcam() {
             const v1 = document.getElementById('webcamFeed');
             const v2 = document.getElementById('mPaneWebcamFeed');
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
             const constraints = {
                 video: { facingMode: { ideal: cameraFacing }, width: { ideal: 1280 }, height: { ideal: 720 } },
                 audio: false

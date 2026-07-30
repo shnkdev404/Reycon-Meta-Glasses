@@ -1,1 +1,344 @@
-{}
+{
+  "threat_phone_757_person": {
+    "object_id": "threat_phone_757_person",
+    "object_class": "person",
+    "label": "person",
+    "original_label": "person",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.04,
+      "y": 3.67,
+      "z": 0.0
+    },
+    "detected_by": "phone_757",
+    "confidence": 0.8563,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438387.8287346,
+    "last_seen": 1785438568.3742251
+  },
+  "threat_phone_461_tv": {
+    "object_id": "threat_phone_461_tv",
+    "object_class": "tv",
+    "label": "tv",
+    "original_label": "tv",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.12,
+      "y": 0.76,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.5274,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438417.429688,
+    "last_seen": 1785438622.5179234
+  },
+  "threat_phone_461_person": {
+    "object_id": "threat_phone_461_person",
+    "object_class": "person",
+    "label": "person",
+    "original_label": "person",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.4,
+      "y": 3.58,
+      "z": 0.0
+    },
+    "detected_by": "phone_461",
+    "confidence": 0.7576,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438418.1474912,
+    "last_seen": 1785438505.1408257
+  },
+  "threat_phone_461_boat": {
+    "object_id": "threat_phone_461_boat",
+    "object_class": "boat",
+    "label": "boat",
+    "original_label": "boat",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.62,
+      "y": -1.08,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.7719,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438422.1103773,
+    "last_seen": 1785438646.5198004
+  },
+  "threat_phone_757_bottle": {
+    "object_id": "threat_phone_757_bottle",
+    "object_class": "bottle",
+    "label": "bottle",
+    "original_label": "bottle",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.0,
+      "y": 0.5,
+      "z": 0.0
+    },
+    "detected_by": "phone_757",
+    "confidence": 0.801,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438422.5080705,
+    "last_seen": 1785438427.578361
+  },
+  "threat_phone_461_laptop": {
+    "object_id": "threat_phone_461_laptop",
+    "object_class": "laptop",
+    "label": "laptop",
+    "original_label": "laptop",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.33,
+      "y": 0.48,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.885,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438423.073844,
+    "last_seen": 1785438640.924388
+  },
+  "threat_phone_461_bird": {
+    "object_id": "threat_phone_461_bird",
+    "object_class": "bird",
+    "label": "bird",
+    "original_label": "bird",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -2.83,
+      "y": -1.39,
+      "z": 0.0
+    },
+    "detected_by": "phone_461",
+    "confidence": 0.6768,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438441.0369537,
+    "last_seen": 1785438513.955115
+  },
+  "threat_phone_alpha_forklift": {
+    "object_id": "threat_phone_alpha_forklift",
+    "object_class": "forklift",
+    "label": "forklift",
+    "original_label": "forklift",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -4.26,
+      "y": 16.24,
+      "z": 0.0
+    },
+    "detected_by": "phone_alpha",
+    "confidence": 0.94,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438451.9319956,
+    "last_seen": 1785438451.9319956
+  },
+  "threat_phone_beta_truck": {
+    "object_id": "threat_phone_beta_truck",
+    "object_class": "truck",
+    "label": "truck",
+    "original_label": "truck",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 12.0,
+      "y": -11.0,
+      "z": 0.0
+    },
+    "detected_by": "phone_beta",
+    "confidence": 0.91,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438451.9884858,
+    "last_seen": 1785438451.9884858
+  },
+  "threat_phone_461_suitcase": {
+    "object_id": "threat_phone_461_suitcase",
+    "object_class": "suitcase",
+    "label": "suitcase",
+    "original_label": "suitcase",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -1.15,
+      "y": -2.11,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.7773,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438464.2445865,
+    "last_seen": 1785438634.529286
+  },
+  "threat_phone_461_airplane": {
+    "object_id": "threat_phone_461_airplane",
+    "object_class": "airplane",
+    "label": "airplane",
+    "original_label": "airplane",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 1.54,
+      "y": -2.98,
+      "z": 0.0
+    },
+    "detected_by": "phone_461",
+    "confidence": 0.5459,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438495.3384151,
+    "last_seen": 1785438495.5536304
+  },
+  "threat_phone_378_train": {
+    "object_id": "threat_phone_378_train",
+    "object_class": "train",
+    "label": "train",
+    "original_label": "train",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.37,
+      "y": -1.2,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.5677,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438534.0566983,
+    "last_seen": 1785438534.1413577
+  },
+  "threat_phone_378_person": {
+    "object_id": "threat_phone_378_person",
+    "object_class": "person",
+    "label": "person",
+    "original_label": "person",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.64,
+      "y": -2.29,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.7911,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438539.7456315,
+    "last_seen": 1785438642.5337374
+  },
+  "threat_phone_378_bed": {
+    "object_id": "threat_phone_378_bed",
+    "object_class": "bed",
+    "label": "bed",
+    "original_label": "bed",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 1.31,
+      "y": -1.61,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.7256,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438544.3513253,
+    "last_seen": 1785438545.130073
+  },
+  "threat_phone_757_cell phone": {
+    "object_id": "threat_phone_757_cell phone",
+    "object_class": "cell phone",
+    "label": "cell phone",
+    "original_label": "cell phone",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.18,
+      "y": 0.52,
+      "z": 0.0
+    },
+    "detected_by": "phone_757",
+    "confidence": 0.8404,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438545.3077743,
+    "last_seen": 1785438557.8655148
+  },
+  "threat_phone_378_car": {
+    "object_id": "threat_phone_378_car",
+    "object_class": "car",
+    "label": "car",
+    "original_label": "car",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -1.9,
+      "y": -6.41,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.6552,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438546.4733388,
+    "last_seen": 1785438570.5561907
+  },
+  "threat_phone_378_airplane": {
+    "object_id": "threat_phone_378_airplane",
+    "object_class": "airplane",
+    "label": "airplane",
+    "original_label": "airplane",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": 0.43,
+      "y": -1.11,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.7551,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438643.4031675,
+    "last_seen": 1785438644.119791
+  },
+  "threat_phone_378_suitcase": {
+    "object_id": "threat_phone_378_suitcase",
+    "object_class": "suitcase",
+    "label": "suitcase",
+    "original_label": "suitcase",
+    "corrected_label": null,
+    "is_corrected": false,
+    "position": {
+      "x": -0.04,
+      "y": -1.75,
+      "z": 0.0
+    },
+    "detected_by": "phone_378",
+    "confidence": 0.6052,
+    "threat_level": "LOW",
+    "threat_score": 0.0,
+    "first_seen": 1785438643.4287713,
+    "last_seen": 1785438647.3289115
+  }
+}

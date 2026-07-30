@@ -282,8 +282,6 @@ class SharedWorldManager:
         Deduplicates nearby existing threats detected by the same glass.
         """
         clean_type = object_type.lower().split(" #")[0].strip()
-        if clean_type in ["person", "human", "laptop", "phone", "cell phone"]:
-            return None
 
         with self.lock:
             # Check if matching threat exists nearby from same glass

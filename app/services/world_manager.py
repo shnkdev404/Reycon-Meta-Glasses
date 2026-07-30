@@ -7,8 +7,9 @@ from app.models import GlassState, Detection, GPSLocation
 logger = logging.getLogger("WorldManager")
 
 HAZARD_CLASSES = {
+    "person", "human", "laptop", "cell phone", "phone", "chair", "bottle", "cup",
     "car", "truck", "bus", "motorcycle", "bicycle", "forklift", "excavator",
-    "stop sign", "hazard", "obstacle"
+    "stop sign", "hazard", "obstacle", "backpack", "dog", "cat", "tv", "remote"
 }
 
 
