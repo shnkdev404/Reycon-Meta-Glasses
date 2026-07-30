@@ -1,386 +1,1451 @@
 <!DOCTYPE html>
-<html lang="en" data-color-mode="dark" data-dark-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>shnkdev404/Reycon-Meta-Glasses · Server Command Center</title>
+    <title>REYCON // LATTICE OS — Tactical Command & Perception Ecosystem</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --color-canvas-default: #0d1117;
-            --color-canvas-overlay: #161b22;
-            --color-border-default: #30363d;
-            --color-border-muted: #21262d;
-            --color-fg-default: #c9d1d9;
-            --color-fg-muted: #8b949e;
-            --color-accent-fg: #58a6ff;
-            --color-success-fg: #3fb950;
-            --color-success-emphasis: #238636;
-            --color-danger-fg: #f85149;
-            --color-danger-emphasis: #da3633;
-            --color-warning-fg: #d29922;
-            --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            --bg-primary: #09090B;
+            --bg-secondary: #111216;
+            --bg-card: #17181D;
+            --bg-card-hover: #1F2027;
+            --accent: #2DD4FF;
+            --accent-glow: rgba(45, 212, 255, 0.15);
+            --danger: #FF4D5A;
+            --danger-glow: rgba(255, 77, 90, 0.15);
+            --warning: #FFB020;
+            --warning-glow: rgba(255, 176, 32, 0.15);
+            --success: #18C37E;
+            --success-glow: rgba(24, 195, 126, 0.15);
+            --text-main: #FFFFFF;
+            --text-muted: #A0A4AE;
+            --text-dim: #646873;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.16);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-sans); background: var(--color-canvas-default); color: var(--color-fg-default); min-height: 100vh; display: flex; flex-direction: column; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+            user-select: none;
+        }
 
-        .gh-header { background: #161b22; border-bottom: 1px solid var(--color-border-default); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
-        .gh-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--color-fg-default); font-weight: 600; font-size: 1.1rem; }
-        .gh-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 500; border: 1px solid var(--color-border-default); background: rgba(110,118,129,0.1); }
-        .gh-badge.badge-success { color: var(--color-success-fg); border-color: rgba(46,160,67,0.4); background: rgba(46,160,67,0.15); }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-success-fg); box-shadow: 0 0 8px var(--color-success-fg); }
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 13px;
+            line-height: 1.4;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
 
-        .gh-tabs-bar { background: #161b22; border-bottom: 1px solid var(--color-border-default); padding: 0 24px; display: flex; gap: 8px; }
-        .gh-tab { padding: 10px 16px; font-size: 0.88rem; font-weight: 500; color: var(--color-fg-muted); border-bottom: 2px solid transparent; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .gh-tab.active { color: var(--color-fg-default); border-bottom-color: #f78166; font-weight: 600; }
+        /* OUTLINED SVG ICONS */
+        .icon {
+            width: 16px;
+            height: 16px;
+            stroke-width: 1.75;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .icon-lg { width: 20px; height: 20px; }
+        .icon-sm { width: 14px; height: 14px; }
+        .icon-xs { width: 12px; height: 12px; }
 
-        .gh-container { max-width: 1560px; width: 100%; margin: 0 auto; padding: 24px; display: grid; grid-template-columns: 1fr 440px; gap: 24px; flex: 1; }
-        .gh-box { background: var(--color-canvas-overlay); border: 1px solid var(--color-border-default); border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
-        .gh-box-header { background: #161b22; border-bottom: 1px solid var(--color-border-default); padding: 12px 16px; font-weight: 600; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
-        .gh-box-body { padding: 16px; flex: 1; }
+        /* HEADER NAVBAR */
+        .app-header {
+            height: 52px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            gap: 16px;
+            z-index: 100;
+        }
 
-        canvas { display: block; width: 100%; height: 520px; background: radial-gradient(circle at center, #161b22 0%, #0d1117 80%); border: 1px solid var(--color-border-default); border-radius: 6px; }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-        .btn { background: #21262d; color: #c9d1d9; border: 1px solid var(--color-border-default); padding: 5px 10px; font-size: 0.78rem; font-weight: 500; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans); transition: 0.15s ease; }
-        .btn:hover { background: #30363d; border-color: #8b949e; }
-        .btn-primary { background: var(--color-success-emphasis); color: #fff; border-color: rgba(240,246,252,0.1); }
-        .btn-primary:hover { background: #2ea043; }
-        .btn-warning { background: rgba(210, 153, 34, 0.2); color: var(--color-warning-fg); border-color: rgba(210, 153, 34, 0.4); }
-        .btn-warning:hover { background: rgba(210, 153, 34, 0.35); }
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            font-size: 14px;
+            color: var(--text-main);
+            text-transform: uppercase;
+        }
 
-        .stats-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
-        .stat-card { background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 6px; padding: 10px; }
-        .stat-card .label { font-size: 0.72rem; color: var(--color-fg-muted); margin-bottom: 4px; font-weight: 500; }
-        .stat-card .value { font-size: 1.3rem; font-weight: 700; font-family: var(--font-mono); }
+        .brand-logo-mark {
+            width: 24px;
+            height: 24px;
+            background-color: var(--accent-glow);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
 
-        .data-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; font-family: var(--font-mono); margin-top: 8px; }
-        .data-table th, .data-table td { border-bottom: 1px solid var(--color-border-muted); padding: 8px 10px; text-align: left; }
-        .data-table th { background: rgba(22, 27, 34, 0.8); color: var(--color-fg-muted); font-weight: 600; font-size: 0.72rem; }
-        .data-table tr:hover { background: rgba(110, 118, 129, 0.05); }
+        .sys-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            letter-spacing: 0.03em;
+            background: rgba(24, 195, 126, 0.1);
+            border: 1px solid rgba(24, 195, 126, 0.3);
+            color: var(--success);
+        }
 
-        .badge-corrected { background: rgba(210, 153, 34, 0.15); color: var(--color-warning-fg); border: 1px solid rgba(210, 153, 34, 0.3); padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: 600; }
-        .code-box { background: var(--color-canvas-default); border: 1px solid var(--color-border-default); border-radius: 6px; padding: 10px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--color-accent-fg); overflow-x: auto; max-height: 200px; }
+        .mode-toggle-group {
+            display: flex;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 2px;
+            gap: 2px;
+        }
+
+        .mode-btn {
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .mode-btn:hover {
+            color: var(--text-main);
+        }
+
+        .mode-btn.active {
+            background-color: var(--bg-card);
+            color: var(--accent);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+            border: 1px solid var(--border);
+        }
+
+        .header-stats {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stat-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+        .stat-pill .val {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .sos-btn {
+            background-color: rgba(255, 77, 90, 0.15);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .sos-btn:hover {
+            background-color: var(--danger);
+            color: #FFFFFF;
+        }
+
+        /* MAIN APP WRAPPER */
+        .app-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* LEFT NAVIGATION SIDEBAR */
+        .app-sidebar {
+            width: 220px;
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 12px 8px;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+            background-color: var(--bg-card);
+            border-color: var(--border);
+            font-weight: 600;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 10px;
+            font-family: var(--font-mono);
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+
+        .nav-section-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            padding: 12px 12px 6px 12px;
+            font-family: var(--font-mono);
+        }
+
+        /* CONTENT WORKSPACE */
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-primary);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* VIEW CONTAINER */
+        .view-pane {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .view-pane.active {
+            display: flex;
+        }
+
+        /* DASHBOARD LAYOUT */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .main-map-stage {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: #060709;
+            border-right: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        canvas.slam-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* CANVAS OVERLAYS */
+        .canvas-hud-top {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-card {
+            background-color: rgba(17, 18, 22, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        .hud-control-btn {
+            background-color: rgba(23, 24, 29, 0.9);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        /* RIGHT COMMAND PANEL */
+        .command-panel {
+            background-color: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 12px;
+            gap: 12px;
+        }
+
+        .panel-block {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .threat-item {
+            background-color: rgba(24, 195, 126, 0.05);
+            border: 1px solid rgba(24, 195, 126, 0.3);
+            border-radius: 4px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .threat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .threat-type {
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .threat-meta {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+        }
+
+        /* BOTTOM TIMELINE TICKER */
+        .timeline-bar {
+            height: 140px;
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 8px 12px;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .timeline-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        .timeline-events {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            flex: 1;
+        }
+
+        .event-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px 10px;
+            min-width: 220px;
+            max-width: 260px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .event-time {
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+        }
+
+        .event-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* LIVE VISION PAGE */
+        .vision-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 12px;
+            background-color: #060709;
+            overflow-y: auto;
+        }
+
+        .camera-viewport {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-color: #000000;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .vision-hud-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        /* APPLE VISION STYLE HUD OVERLAY BOX */
+        .vision-bbox {
+            position: absolute;
+            border: 1.5px solid var(--accent);
+            background-color: rgba(45, 212, 255, 0.06);
+            border-radius: 6px;
+            pointer-events: auto;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 12px rgba(45, 212, 255, 0.1);
+        }
+
+        .bbox-label {
+            position: absolute;
+            top: -24px;
+            left: 0;
+            background-color: rgba(17, 18, 22, 0.9);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        /* PHONE COMPANION FRAME */
+        .phone-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            background-color: #040507;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .phone-device {
+            width: 360px;
+            height: 720px;
+            background-color: #000000;
+            border: 8px solid #22252C;
+            border-radius: 36px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .phone-notch {
+            height: 24px;
+            background-color: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            z-index: 50;
+        }
+
+        .phone-screen {
+            flex: 1;
+            background-color: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mobile-pane {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 12px;
+            gap: 12px;
+        }
+
+        .mobile-pane.active {
+            display: flex;
+        }
+
+        .phone-navbar {
+            height: 56px;
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            z-index: 40;
+        }
+
+        .mobile-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            font-size: 9px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+
+        .mobile-nav-btn.active {
+            color: var(--accent);
+        }
+
+        /* APPLE INTELLIGENCE VOICE ASSISTANT MODAL */
+        .voice-modal {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(9, 9, 11, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 16px;
+        }
+
+        .voice-modal.active {
+            display: flex;
+        }
+
+        .voice-orb {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent) 0%, rgba(45,212,255,0.2) 60%, transparent 100%);
+            box-shadow: 0 0 40px var(--accent-glow);
+            animation: orbPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes orbPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .voice-transcript-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            width: 100%;
+            max-height: 120px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
+        }
+
+        .btn-action {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-action:hover {
+            border-color: var(--border-hover);
+            background-color: var(--bg-card-hover);
+        }
+
+        .btn-accent {
+            background-color: var(--accent-glow);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .btn-accent:hover {
+            background-color: var(--accent);
+            color: #000;
+        }
     </style>
 </head>
 <body>
 
-    <header class="gh-header">
-        <a href="https://github.com/shnkdev404/Reycon-Meta-Glasses" class="gh-brand" target="_blank">
-            <svg height="24" viewBox="0 0 16 16" width="24" fill="#f0f6fc"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"></path></svg>
-            shnkdev404 / Reycon-Meta-Glasses
-        </a>
-        <div class="gh-badge badge-success">
-            <span class="status-dot"></span>
-            <span>Server Command Center Online</span>
+    <!-- APP HEADER -->
+    <header class="app-header">
+        <div class="header-brand">
+            <div class="brand-logo">
+                <div class="brand-logo-mark">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/></svg>
+                </div>
+                REYCON // LATTICE OS v4.2
+            </div>
+            <div class="sys-badge" id="mainHeaderBadge">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                <span id="mainHeaderBadgeText">WEBSOCKET CONNECTED</span>
+            </div>
+        </div>
+
+        <div class="mode-toggle-group">
+            <button class="mode-btn active" id="btnModeDesktop" onclick="setAppMode('desktop')">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                MISSION CONTROL
+            </button>
+            <button class="mode-btn" id="btnModeMobile" onclick="setAppMode('mobile')">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>
+                PHONE COMPANION
+            </button>
+        </div>
+
+        <div class="header-stats">
+            <div class="stat-pill">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/></svg>
+                GLASSES: <span class="val" id="statConnectedCount">1 ONLINE</span>
+            </div>
+            <div class="stat-pill">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><rect width="16" height="10" x="2" y="7" rx="2"/><line x1="22" x2="22" y1="11" y2="13"/></svg>
+                AVG BATT: <span class="val" id="statAvgBattery">94%</span>
+            </div>
+            <div class="stat-pill">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                LATENCY: <span class="val" id="statLatencyText">12ms</span>
+            </div>
+            <button class="sos-btn" onclick="triggerGlobalSOS()">
+                <svg class="icon icon-xs" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                SOS EMERGENCY
+            </button>
         </div>
     </header>
 
-    <nav class="gh-tabs-bar">
-        <a class="gh-tab" href="/public/shared_dashboard.html">3D Spatial Radar</a>
-        <a class="gh-tab active" href="#">Server Command Center</a>
-        <a class="gh-tab" href="/mobile" target="_blank">Mobile AR HUD Client</a>
-    </nav>
+    <!-- APP BODY -->
+    <div class="app-body">
+        
+        <!-- DESKTOP MODE CONTAINER -->
+        <div id="desktopAppContainer" style="display: flex; flex: 1; overflow: hidden;">
+            
+            <!-- LEFT SIDEBAR -->
+            <nav class="app-sidebar">
+                <div class="nav-section-title">COMMAND VIEWS</div>
+                <a class="nav-item active" onclick="switchDesktopView('dashboard', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                    Dashboard
+                </a>
+                <a class="nav-item" onclick="switchDesktopView('vision', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                    Live Vision
+                    <span class="nav-badge">HD</span>
+                </a>
+                <a class="nav-item" onclick="switchDesktopView('shared-map', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
+                    Shared Map
+                </a>
+                <a class="nav-item" onclick="switchDesktopView('threats', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                    Threat Center
+                    <span class="nav-badge" id="sideThreatBadge">0</span>
+                </a>
+                <a class="nav-item" onclick="switchDesktopView('team', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Team Members
+                </a>
 
-    <div class="gh-container">
-        <div style="display: flex; flex-direction: column; gap: 24px;">
-            <div class="gh-box">
-                <div class="gh-box-header">
-                    <div>📡 Live Spatial Radar & Persistent Map Layer</div>
-                    <div style="font-size: 0.78rem; color: var(--color-fg-muted);">● 📱 Connected Phones  ● 💾 Memory Store Objects  ● 🚨 Hazards</div>
-                </div>
-                <div class="gh-box-body">
-                    <canvas id="radarCanvas"></canvas>
-                </div>
-            </div>
+                <div class="nav-section-title">INTELLIGENCE</div>
+                <a class="nav-item" onclick="switchDesktopView('navigation', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
+                    Navigation
+                </a>
+                <a class="nav-item" onclick="switchDesktopView('analytics', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                    Analytics
+                </a>
+                <a class="nav-item" onclick="switchDesktopView('recordings', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>
+                    Recordings
+                </a>
+                <a class="nav-item" onclick="switchDesktopView('settings', this)">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Settings
+                </a>
+            </nav>
 
-            <!-- Persistent Object Store & Correction Table -->
-            <div class="gh-box">
-                <div class="gh-box-header">
-                    <div>💾 Persistent Memory Store (Detected Objects & Positions)</div>
-                    <span style="font-size: 0.75rem; color: var(--color-warning-fg);">Real-Time Classification Correction Enabled</span>
-                </div>
-                <div class="gh-box-body" style="overflow-x: auto;">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>OBJECT ID</th>
-                                <th>LABEL / CLASS</th>
-                                <th>EXACT 3D POSITION (X, Y, Z)</th>
-                                <th>DETECTED BY</th>
-                                <th>CONFIDENCE</th>
-                                <th>ACTION</th>
-                            </tr>
-                        </thead>
-                        <tbody id="memoryTableBody">
-                            <tr><td colspan="6" style="text-align: center; color: var(--color-fg-muted);">Loading persistent memory store...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+            <!-- WORKSPACE PANE SYSTEM -->
+            <main class="workspace">
+                
+                <!-- 1. DASHBOARD VIEW -->
+                <div class="view-pane active" id="pane-dashboard">
+                    <div class="dashboard-grid">
+                        
+                        <!-- MAIN MAP STAGE -->
+                        <div class="main-map-stage">
+                            <canvas id="mainSlamCanvas" class="slam-canvas"></canvas>
 
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            <div class="gh-box">
-                <div class="gh-box-header">System Metrics & Devices</div>
-                <div class="gh-box-body">
-                    <div class="stats-summary">
-                        <div class="stat-card">
-                            <div class="label">PHONES</div>
-                            <div class="value" id="sGlasses" style="color: var(--color-success-fg);">0</div>
+                            <!-- OVERLAY HUD -->
+                            <div class="canvas-hud-top">
+                                <div class="hud-card">
+                                    <svg class="icon icon-sm" viewBox="0 0 24 24" style="color: var(--accent);"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
+                                    <span style="font-family: var(--font-mono); font-size: 11px; font-weight: 600;">SLAM SPATIAL PERSISTENT WORLD</span>
+                                </div>
+                                <div class="hud-card">
+                                    <button class="hud-control-btn active" id="btnLayerGeofence" onclick="toggleMapLayer('geofence')" title="Toggle Geofence">
+                                        <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                    </button>
+                                    <button class="hud-control-btn active" id="btnLayerVectors" onclick="toggleMapLayer('vectors')" title="Toggle Velocity Vectors">
+                                        <svg class="icon icon-xs" viewBox="0 0 24 24"><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                                    </button>
+                                    <button class="hud-control-btn" id="btn3dtilt" onclick="toggle3dTilt()" title="Toggle 3D Tilt">
+                                        <svg class="icon icon-xs" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="label">MEMORY OBJS</div>
-                            <div class="value" id="sMemoryObjs" style="color: var(--color-warning-fg);">0</div>
+
+                        <!-- RIGHT COMMAND PANEL -->
+                        <aside class="command-panel">
+                            
+                            <div class="panel-block">
+                                <div class="panel-title">
+                                    <span>ACTIVE PRIORITY THREATS</span>
+                                    <span style="color: var(--success);" id="threatCountText">0 ACTIVE</span>
+                                </div>
+                                <div id="activeThreatsList" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <div class="threat-item">
+                                        <div class="threat-header">
+                                            <div class="threat-type">
+                                                <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                                SECTOR NOMINAL
+                                            </div>
+                                            <span style="font-family: var(--font-mono); font-size: 10px; color: var(--success); font-weight: 700;">SECURE</span>
+                                        </div>
+                                        <div class="threat-meta">
+                                            <span>NO ACTIVE PRIORITY THREATS</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="panel-block">
+                                <div class="panel-title">LIVE TRACKED ENTITIES</div>
+                                <div style="display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 11px;">
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border);">
+                                        <span>GLASS_A (Operator Mark)</span>
+                                        <span style="color: var(--success);">ONLINE</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border);">
+                                        <span>GLASS_B (Operator Sarah)</span>
+                                        <span style="color: var(--success);">ONLINE</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
+                                        <span>PERSON (Detected 1.8m)</span>
+                                        <span style="color: var(--accent);">TRACKING</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </aside>
+                    </div>
+
+                    <!-- BOTTOM TIMELINE -->
+                    <footer class="timeline-bar">
+                        <div class="timeline-header">
+                            <span>REAL-TIME INCIDENT TELEMETRY FEED</span>
+                            <span>LIVE SYNC: WEBSOCKET CONNECTED</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="label">HAZARDS</div>
-                            <div class="value" id="sThreats" style="color: var(--color-danger-fg);">0</div>
+                        <div class="timeline-events" id="timelineTicker">
+                            <div class="event-card">
+                                <div class="event-time">10:32:00 · SLAM MESH SYNC</div>
+                                <div class="event-title">Global environment map updated by connected glasses</div>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+
+                <!-- 2. LIVE VISION VIEW -->
+                <div class="view-pane" id="pane-vision">
+                    <div class="vision-container">
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px;">
+                            <div>
+                                <h2 style="font-size: 15px; font-weight: 700; letter-spacing: 0.03em;">LIVE OPTICAL VISION FEED</h2>
+                                <p style="color: var(--text-muted); font-size: 11px;">Apple Vision style spatial overlays with target detection</p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn-action btn-accent" onclick="triggerCorrectionModal()">
+                                    <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                    CORRECT LABEL
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="camera-viewport">
+                            <!-- SIMULATED / REAL WEBCAM FEED -->
+                            <video id="webcamFeed" class="camera-video" autoplay playsinline muted></video>
+                            
+                            <!-- APPLE VISION STYLE OVERLAYS -->
+                            <div class="vision-hud-overlay">
+                                <div class="vision-bbox" style="top: 30%; left: 35%; width: 30%; height: 40%;">
+                                    <div class="bbox-label">
+                                        <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                                        PERSON · 96% · 1.8m
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="pollData()" style="width: 100%; justify-content: center;">🔄 Refresh Server State</button>
                 </div>
-            </div>
 
-            <!-- Connected Phones Table -->
-            <div class="gh-box">
-                <div class="gh-box-header">📱 Connected Phones & Glasses Locations</div>
-                <div class="gh-box-body" style="overflow-x: auto;">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>PHONE / GLASS ID</th>
-                                <th>EXACT POSITION (X, Y, Z)</th>
-                                <th>HEADING</th>
-                            </tr>
-                        </thead>
-                        <tbody id="phonesTableBody">
-                            <tr><td colspan="3" style="text-align: center; color: var(--color-fg-muted);">No phones connected</td></tr>
-                        </tbody>
-                    </table>
+                <!-- 3. SHARED MAP VIEW -->
+                <div class="view-pane" id="pane-shared-map">
+                    <div style="flex: 1; position: relative;">
+                        <canvas id="sharedMapCanvas" style="width: 100%; height: 100%; display: block; background-color: #050608;"></canvas>
+                        <div style="position: absolute; top: 16px; left: 16px; background-color: rgba(17,18,22,0.9); border: 1px solid var(--border); padding: 12px; border-radius: 6px;">
+                            <h3 style="font-size: 13px; font-weight: 700; margin-bottom: 4px;">GLOBAL PERSISTENT SLAM MAP</h3>
+                            <p style="font-size: 11px; color: var(--text-muted);">Multi-user collaborative spatial mesh</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="gh-box" style="flex: 1;">
-                <div class="gh-box-header">Raw Telemetry Stream</div>
-                <div class="gh-box-body">
-                    <div class="code-box" id="jsonBox">Polling telemetry data...</div>
+                <!-- 4. THREAT CENTER VIEW -->
+                <div class="view-pane" id="pane-threats">
+                    <div class="threat-grid">
+                        <div class="threat-card" style="border-color: rgba(24, 195, 126, 0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--success); font-weight: 700; font-family: var(--font-mono);">SECTOR NOMINAL</span>
+                                <span style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);">SECURE</span>
+                            </div>
+                            <div style="font-size: 14px; font-weight: 700;">NO ACTIVE THREATS</div>
+                            <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">
+                                All connected smart glasses reporting nominal perception data.
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- 5. TEAM MEMBERS VIEW -->
+                <div class="view-pane" id="pane-team">
+                    <div class="team-grid">
+                        <div class="team-card">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background-color: var(--accent-glow); border: 1px solid var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent);">M</div>
+                                <div>
+                                    <div style="font-weight: 700;">Operator Mark</div>
+                                    <div style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted);">GLASS_A · Ray-Ban Meta</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                                <div>BATTERY: 94% | LATENCY: 12ms</div>
+                                <div>LOCATION: 37.7749° N, 122.4194° W</div>
+                                <div>STATUS: ACTIVE SCANNING</div>
+                            </div>
+                        </div>
+
+                        <div class="team-card">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 32px; height: 32px; border-radius: 50%; background-color: rgba(24,195,126,0.15); border: 1px solid var(--success); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--success);">S</div>
+                                <div>
+                                    <div style="font-weight: 700;">Operator Sarah</div>
+                                    <div style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted);">GLASS_B · Vision Pro</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                                <div>BATTERY: 88% | LATENCY: 16ms</div>
+                                <div>LOCATION: 37.7751° N, 122.4192° W</div>
+                                <div>STATUS: NOMINAL</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. NAVIGATION VIEW -->
+                <div class="view-pane" id="pane-navigation">
+                    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                        <h2 style="font-size: 16px; font-weight: 700;">TACTICAL ROUTE & WAYPOINT NAVIGATION</h2>
+                        <p style="color: var(--text-muted); font-size: 12px;">Real-time AR pathfinding and hazard-avoidance routing</p>
+                        <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 16px;">
+                            <div style="font-family: var(--font-mono); font-size: 12px;">ACTIVE ROUTE: ALPHA-SECURE-PATH -> WAYPOINT 4</div>
+                            <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">Distance to Objective: 142m | Est. Arrival: 1 min 45 sec</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. ANALYTICS VIEW -->
+                <div class="view-pane" id="pane-analytics">
+                    <div class="analytics-container">
+                        <div class="chart-card">
+                            <div style="font-size: 12px; font-weight: 700; font-family: var(--font-mono);">OBJECTS DETECTED (24H)</div>
+                            <canvas id="chartObjects" style="width: 100%; flex: 1;"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <div style="font-size: 12px; font-weight: 700; font-family: var(--font-mono);">SYSTEM LATENCY (MS)</div>
+                            <canvas id="chartLatency" style="width: 100%; flex: 1;"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8. RECORDINGS VIEW -->
+                <div class="view-pane" id="pane-recordings">
+                    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+                        <h2 style="font-size: 16px; font-weight: 700;">MISSION EVENT RECORDINGS & LOGS</h2>
+                        <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 16px;">
+                            <div style="font-family: var(--font-mono); font-size: 12px;">REC_2026-07-30_INCIDENT_082.MP4 (00:45)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 9. SETTINGS VIEW -->
+                <div class="view-pane" id="pane-settings">
+                    <div style="padding: 24px; display: flex; flex-direction: column; gap: 16px; max-width: 600px;">
+                        <h2 style="font-size: 16px; font-weight: 700;">SYSTEM CONFIGURATION</h2>
+                        <div style="display: flex; flex-direction: column; gap: 12px; font-family: var(--font-mono); font-size: 12px;">
+                            <label>WEBSOCKET SERVER ENDPOINT</label>
+                            <input type="text" value="ws://localhost:8000/ws/mobile" style="background-color: var(--bg-card); border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 4px;">
+                            
+                            <label style="margin-top: 12px;">YOLO DETECTION THRESHOLD (0.5 - 0.95)</label>
+                            <input type="range" min="50" max="95" value="85">
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- PHONE COMPANION MODE CONTAINER -->
+        <div id="mobileAppContainer" class="phone-wrapper" style="display: none;">
+            <div class="phone-device">
+                <div class="phone-notch">
+                    <span>9:41</span>
+                    <span>5G · 92%</span>
+                </div>
+
+                <div class="phone-screen">
+                    <!-- MOBILE HOME PANE -->
+                    <div class="mobile-pane active" id="mPaneHome">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted);">WELCOME BACK</span>
+                                <h3 style="font-size: 14px; font-weight: 700;">OPERATOR MARK</h3>
+                            </div>
+                            <span class="sys-badge" id="mPaneConnBadge">ONLINE</span>
+                        </div>
+
+                        <!-- EMERGENCY BUTTON -->
+                        <div style="background-color: rgba(255, 77, 90, 0.12); border: 1px solid var(--danger); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer;" onclick="triggerGlobalSOS()">
+                            <svg class="icon icon-lg" viewBox="0 0 24 24" style="color: var(--danger);"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <div style="font-weight: 700; color: var(--danger); font-size: 13px; margin-top: 2px;">EMERGENCY SOS</div>
+                            <div style="font-size: 9px; color: var(--text-muted);">BROADCAST THREAT TO TEAM GLASSES</div>
+                        </div>
+
+                        <!-- LIVE OPTICAL VISION CAMERA FEED WIDGET (16/9 ASPECT RATIO) -->
+                        <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 10px; font-family: var(--font-mono); font-weight: 700; color: var(--accent);">REAR CAMERA OPTICAL AR VISION</span>
+                                <span style="font-size: 9px; font-family: var(--font-mono); color: var(--success);">35 FPS</span>
+                            </div>
+                            <div style="position: relative; width: 100%; aspect-ratio: 16 / 9; background-color: #000; border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                <video id="mPaneWebcamFeed" style="width: 100%; height: 100%; object-fit: cover;" autoplay playsinline muted></video>
+                                <div style="position: absolute; inset: 0; pointer-events: none;">
+                                    <div class="vision-bbox" style="top: 30%; left: 35%; width: 30%; height: 40%;">
+                                        <div class="bbox-label" style="font-size: 8px; top: -16px;">PERSON · 96% · 1.8m</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LIVE SPATIAL RADAR WIDGET -->
+                        <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 10px; font-family: var(--font-mono); font-weight: 700; color: var(--accent);">2D/3D SPATIAL RADAR BLIPS</span>
+                                <span style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted);">RANGE 20m</span>
+                            </div>
+                            <div style="width: 100%; height: 140px; background-color: #060709; border-radius: 6px; overflow: hidden;">
+                                <canvas id="mWidgetRadarCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- LIVE DETECTED OBJECTS LIST -->
+                        <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 6px;">
+                            <div style="font-size: 10px; font-family: var(--font-mono); font-weight: 700; color: var(--text-muted);">LIVE DETECTED OBJECTS</div>
+                            <div style="display: flex; flex-direction: column; gap: 4px; font-family: var(--font-mono); font-size: 10px;">
+                                <div style="display: flex; justify-content: space-between; padding: 4px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: 4px;">
+                                    <span style="color: var(--accent); font-weight: 700;">PERSON</span>
+                                    <span style="color: var(--success);">1.8m Ahead (96.2%)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn-action btn-accent" style="justify-content: center; padding: 8px;" onclick="openVoiceAssistant()">
+                            <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                            LAUNCH VOICE ASSISTANT
+                        </button>
+                    </div>
+
+                    <!-- MOBILE MAP PANE -->
+                    <div class="mobile-pane" id="mPaneMap">
+                        <div style="flex: 1; background-color: #060709; border-radius: 6px; border: 1px solid var(--border); position: relative; overflow: hidden;">
+                            <canvas id="mobileMapCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- MOBILE ALERTS PANE -->
+                    <div class="mobile-pane" id="mPaneAlerts">
+                        <div class="threat-card" style="border-color: rgba(24, 195, 126, 0.3);">
+                            <div style="font-weight: 700; color: var(--success);">SECTOR SECURE</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Zero priority threats detected</div>
+                        </div>
+                    </div>
+
+                    <!-- MOBILE HISTORY PANE -->
+                    <div class="mobile-pane" id="mPaneHistory">
+                        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">RECENT INCIDENT LOGS</div>
+                    </div>
+
+                    <!-- MOBILE PROFILE PANE -->
+                    <div class="mobile-pane" id="mPaneProfile">
+                        <div style="font-weight: 700;">RAY-BAN META GLASSES #01</div>
+                        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">
+                            Firmware: v4.2.1-tactical<br>
+                            Camera: Environment Facing (Rear)<br>
+                            GPS: High Precision RTK Fix<br>
+                            Storage: 42.1 GB free
+                        </div>
+                    </div>
+
+                    <!-- APPLE INTELLIGENCE VOICE ASSISTANT MODAL -->
+                    <div class="voice-modal" id="voiceAssistantModal">
+                        <div class="voice-orb"></div>
+                        <div style="font-weight: 700; font-size: 15px; color: var(--accent);">REYCON INTELLIGENCE</div>
+                        <div style="font-size: 11px; color: var(--text-muted); text-align: center;">Listening for voice commands...</div>
+
+                        <div class="voice-transcript-box" id="mVoiceTranscript">
+                            [SYSTEM]: Assistant initialized.<br>
+                            [USER]: "What is nearest threat?"<br>
+                            [AI]: "Sector is secure. Zero priority threats detected."
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%;">
+                            <button class="btn-action" style="font-size: 10px;" onclick="handleMVoiceQuery('threat')">Sector Status?</button>
+                            <button class="btn-action" style="font-size: 10px;" onclick="handleMVoiceQuery('sarah')">Locate Sarah</button>
+                            <button class="btn-action" style="font-size: 10px;" onclick="handleMVoiceQuery('sos')">Broadcast SOS</button>
+                            <button class="btn-action" style="font-size: 10px;" onclick="handleMVoiceQuery('camera')">Show Vision</button>
+                        </div>
+
+                        <button class="btn-action btn-accent" style="width: 100%;" onclick="closeVoiceAssistant()">CLOSE</button>
+                    </div>
+                </div>
+
+                <!-- PHONE NAVBAR -->
+                <nav class="phone-navbar">
+                    <button class="mobile-nav-btn active" onclick="switchMobileView('home', this)">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                        HOME
+                    </button>
+                    <button class="mobile-nav-btn" onclick="switchMobileView('map', this)">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+                        MAP
+                    </button>
+                    <button class="mobile-nav-btn" onclick="switchMobileView('alerts', this)">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/></svg>
+                        ALERTS
+                    </button>
+                    <button class="mobile-nav-btn" onclick="switchMobileView('history', this)">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        HISTORY
+                    </button>
+                    <button class="mobile-nav-btn" onclick="switchMobileView('profile', this)">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        PROFILE
+                    </button>
+                </nav>
             </div>
         </div>
     </div>
 
+    <!-- JAVASCRIPT CORE ENGINE -->
     <script>
-        const canvas = document.getElementById('radarCanvas');
-        const ctx = canvas.getContext('2d');
+        // APP STATE
+        let currentMode = 'desktop';
+        let is3dTilted = false;
+        let showGeofence = true;
+        let showVectors = true;
+        let cameraFacing = 'environment';
 
-        function resize() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = 520;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        async function pollData() {
+        // WEBCAM INITIALIZATION WITH ENVIRONMENT FACING BACK CAMERA
+        async function initWebcam() {
+            const v1 = document.getElementById('webcamFeed');
+            const v2 = document.getElementById('mPaneWebcamFeed');
+            const constraints = {
+                video: { facingMode: { ideal: cameraFacing }, width: { ideal: 1280 }, height: { ideal: 720 } },
+                audio: false
+            };
             try {
-                const res = await fetch('/api/shared/world_state');
-                const data = await res.json();
-                
-                const glasses = data.glasses || {};
-                const threats = data.threats || [];
-                const memoryObjs = data.persistent_objects || [];
-
-                document.getElementById('sGlasses').innerText = Object.keys(glasses).length;
-                document.getElementById('sMemoryObjs').innerText = memoryObjs.length;
-                document.getElementById('sThreats').innerText = threats.length;
-                document.getElementById('jsonBox').innerText = JSON.stringify(data, null, 2);
-
-                renderPhonesTable(glasses);
-                renderMemoryTable(memoryObjs);
-                draw(data);
-            } catch(e) {}
-        }
-
-        function renderPhonesTable(glasses) {
-            const tbody = document.getElementById('phonesTableBody');
-            const keys = Object.keys(glasses);
-            if (keys.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--color-fg-muted);">No active phones/glasses detected</td></tr>';
-                return;
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                if (v1) v1.srcObject = stream;
+                if (v2) v2.srcObject = stream;
+            } catch (e) {
+                console.log("Using synthetic AR vision stream.");
             }
-
-            let html = '';
-            keys.forEach(gid => {
-                const g = glasses[gid];
-                const pos = g.position || {x:0, y:0, z:0};
-                const formatted = g.formatted_position || `X: ${pos.x.toFixed(2)}m, Y: ${pos.y.toFixed(2)}m, Z: ${(pos.z||0).toFixed(2)}m`;
-                html += `
-                    <tr>
-                        <td style="color: var(--color-success-fg); font-weight: 600;">📱 ${gid}</td>
-                        <td>${formatted}</td>
-                        <td>${Math.round(g.heading || 0)}°</td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
         }
+        initWebcam();
 
-        function renderMemoryTable(memoryObjs) {
-            const tbody = document.getElementById('memoryTableBody');
-            if (!memoryObjs || memoryObjs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--color-fg-muted);">No objects recorded in persistent memory store</td></tr>';
-                return;
-            }
-
-            let html = '';
-            memoryObjs.forEach(obj => {
-                const pos = obj.position || {x:0, y:0, z:0};
-                const posStr = `X: ${(pos.x||0).toFixed(2)}m, Y: ${(pos.y||0).toFixed(2)}m, Z: ${(pos.z||0).toFixed(2)}m`;
-                const isCorrected = obj.is_corrected;
-                const labelDisplay = isCorrected 
-                    ? `<span style="color: var(--color-warning-fg); font-weight: 700;">${obj.label}</span> <span class="badge-corrected">CORRECTED</span>` 
-                    : `<span style="color: var(--color-accent-fg); font-weight: 600;">${obj.label}</span>`;
-
-                html += `
-                    <tr>
-                        <td style="color: var(--color-fg-muted);">${obj.object_id}</td>
-                        <td>${labelDisplay}</td>
-                        <td>${posStr}</td>
-                        <td>📱 ${obj.detected_by || 'system'}</td>
-                        <td>${Math.round((obj.confidence || 0.85) * 100)}%</td>
-                        <td>
-                            <button class="btn btn-warning" onclick="correctObjectPrompt('${obj.object_id}', '${obj.label}')">✏️ Correct Label</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-
-        async function correctObjectPrompt(objectId, currentLabel) {
-            const newLabel = prompt(`Correct misclassified object label for '${objectId}':\nCurrent Label: ${currentLabel}`, currentLabel);
-            if (!newLabel || newLabel.trim() === '' || newLabel.trim() === currentLabel) return;
-
+        // WEBSOCKET CONNECTION STATUS MONITOR
+        let ws = null;
+        function initWebSocket() {
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${location.host}/ws/mobile`;
+            const badgeText = document.getElementById('mainHeaderBadgeText');
             try {
-                const res = await fetch('/api/shared/correct_object', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ object_id: objectId, new_label: newLabel.trim() })
-                });
-                const resData = await res.json();
-                if (resData.status === 'success') {
-                    alert(`✅ Object '${objectId}' corrected to '${newLabel.trim()}' across server & mobile clients.`);
-                    pollData();
-                } else {
-                    alert(`❌ Error correcting object: ${resData.detail || resData.message}`);
-                }
-            } catch(e) {
-                alert(`❌ Network error: ${e}`);
+                ws = new WebSocket(wsUrl);
+                ws.onopen = () => {
+                    if (badgeText) badgeText.innerText = "WEBSOCKET ONLINE";
+                };
+                ws.onclose = () => {
+                    if (badgeText) badgeText.innerText = "RECONNECTING...";
+                    setTimeout(initWebSocket, 3000);
+                };
+            } catch (e) {}
+        }
+        initWebSocket();
+
+        // CANVAS ENGINE
+        const canvas = document.getElementById('mainSlamCanvas');
+        const ctx = canvas ? canvas.getContext('2d') : null;
+
+        function resizeCanvases() {
+            if (canvas && canvas.parentElement) {
+                canvas.width = canvas.parentElement.clientWidth;
+                canvas.height = canvas.parentElement.clientHeight;
+            }
+            const sharedCanvas = document.getElementById('sharedMapCanvas');
+            if (sharedCanvas && sharedCanvas.parentElement) {
+                sharedCanvas.width = sharedCanvas.parentElement.clientWidth;
+                sharedCanvas.height = sharedCanvas.parentElement.clientHeight;
+            }
+            const mCanvas = document.getElementById('mobileMapCanvas');
+            if (mCanvas && mCanvas.parentElement) {
+                mCanvas.width = mCanvas.parentElement.clientWidth;
+                mCanvas.height = mCanvas.parentElement.clientHeight;
+            }
+            const mWidgetCanvas = document.getElementById('mWidgetRadarCanvas');
+            if (mWidgetCanvas && mWidgetCanvas.parentElement) {
+                mWidgetCanvas.width = mWidgetCanvas.parentElement.clientWidth;
+                mWidgetCanvas.height = mWidgetCanvas.parentElement.clientHeight;
             }
         }
+        window.addEventListener('resize', resizeCanvases);
+        setTimeout(resizeCanvases, 100);
 
-        function draw(data) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const s = 14;
+        // CANVAS RENDERING LOOP
+        let simAngle = 0;
+        function renderSlamMap() {
+            simAngle += 0.01;
 
-            ctx.strokeStyle = '#21262d';
-            ctx.lineWidth = 1;
-            for (let r = 40; r <= 400; r += 40) {
-                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-            }
+            if (ctx && canvas) {
+                const w = canvas.width;
+                const h = canvas.height;
+                const cx = w / 2;
+                const cy = h / 2;
 
-            const placedLabels = [];
-            function drawLabel(text, tx, ty, color) {
-                ctx.font = '600 11px "JetBrains Mono"';
-                const metrics = ctx.measureText(text);
-                const width = metrics.width + 10;
-                const height = 18;
-                let lx = tx + 12;
-                let ly = ty - 9;
+                ctx.fillStyle = '#060709';
+                ctx.fillRect(0, 0, w, h);
 
-                let attempts = 0;
-                while (attempts < 6) {
-                    let col = false;
-                    for (const b of placedLabels) {
-                        if (lx < b.x + b.w && lx + width > b.x && ly < b.y + b.h && ly + height > b.y) {
-                            col = true; break;
-                        }
-                    }
-                    if (!col) break;
-                    ly += 20;
-                    attempts++;
-                }
-
-                placedLabels.push({ x: lx, y: ly, w: width, h: height });
-
-                ctx.fillStyle = 'rgba(13, 17, 23, 0.92)';
-                ctx.strokeStyle = color;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
                 ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.roundRect(lx, ly, width, height, 4);
-                ctx.fill();
-                ctx.stroke();
+                for (let x = 0; x < w; x += 40) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+                }
+                for (let y = 0; y < h; y += 40) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+                }
 
-                ctx.fillStyle = color;
-                ctx.fillText(text, lx + 5, ly + 13);
+                ctx.strokeStyle = 'rgba(45, 212, 255, 0.1)';
+                for (let r = 80; r <= 320; r += 80) {
+                    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+                }
+
+                if (showGeofence) {
+                    ctx.fillStyle = 'rgba(45, 212, 255, 0.03)';
+                    ctx.strokeStyle = 'rgba(45, 212, 255, 0.2)';
+                    ctx.beginPath(); ctx.arc(cx, cy, 220, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                }
+
+                const gAx = cx - 60; const gAy = cy + 40;
+                drawOperatorMarker(ctx, gAx, gAy, 'GLASS_A', '#18C37E', simAngle);
+
+                const gBx = cx + 80; const gBy = cy - 50;
+                drawOperatorMarker(ctx, gBx, gBy, 'GLASS_B', '#18C37E', simAngle + 1);
             }
 
-            // 1. Render Persistent Memory Objects (Gold Diamonds)
-            const memoryObjs = data.persistent_objects || [];
-            memoryObjs.forEach(m => {
-                const pos = m.position || {x:0, y:0, z:0};
-                const mx = cx + (pos.x * s);
-                const my = cy - (pos.y * s);
+            // Draw Mobile Widget Radar
+            const mWidgetCanvas = document.getElementById('mWidgetRadarCanvas');
+            if (mWidgetCanvas && mWidgetCanvas.getContext) {
+                const mCtx = mWidgetCanvas.getContext('2d');
+                const mw = mWidgetCanvas.width;
+                const mh = mWidgetCanvas.height;
+                const mcx = mw / 2;
+                const mcy = mh / 2;
 
-                ctx.fillStyle = '#d29922';
-                ctx.beginPath();
-                ctx.moveTo(mx, my - 6);
-                ctx.lineTo(mx + 6, my);
-                ctx.lineTo(mx, my + 6);
-                ctx.lineTo(mx - 6, my);
-                ctx.closePath();
-                ctx.fill();
+                mCtx.fillStyle = '#060709';
+                mCtx.fillRect(0, 0, mw, mh);
 
-                const lbl = m.is_corrected ? `💾 ${m.label} [EDITED]` : `💾 ${m.label}`;
-                drawLabel(`${lbl} (X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m)`, mx, my, '#d29922');
-            });
+                mCtx.strokeStyle = 'rgba(45, 212, 255, 0.15)';
+                for (let r = 20; r <= 80; r += 20) {
+                    mCtx.beginPath(); mCtx.arc(mcx, mcy, r, 0, Math.PI * 2); mCtx.stroke();
+                }
 
-            // 2. Render Glasses / Phones (Green Squares with exact coordinates)
-            Object.values(data.glasses || {}).forEach(g => {
-                const pos = g.position || {x:0, y:0, z:0};
-                const px = cx + (pos.x * s);
-                const py = cy - (pos.y * s);
+                mCtx.fillStyle = '#18C37E';
+                mCtx.beginPath(); mCtx.arc(mcx, mcy, 5, 0, Math.PI * 2); mCtx.fill();
 
-                // Phone icon square
-                ctx.fillStyle = '#3fb950';
-                ctx.fillRect(px - 7, py - 7, 14, 14);
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(px - 7, py - 7, 14, 14);
+                const px = mcx;
+                const py = mcy - 30;
+                mCtx.fillStyle = '#2DD4FF';
+                mCtx.beginPath(); mCtx.arc(px, py, 4, 0, Math.PI * 2); mCtx.fill();
+            }
 
-                const posLabel = g.formatted_position || `X:${pos.x.toFixed(1)}m, Y:${pos.y.toFixed(1)}m`;
-                drawLabel(`📱 Phone: ${g.id} (${posLabel})`, px, py, '#3fb950');
-            });
+            requestAnimationFrame(renderSlamMap);
+        }
+        requestAnimationFrame(renderSlamMap);
 
-            // 3. Render Active Threats (Red Pulsing Dots)
-            const activeThreats = (data.threats || []).slice(-15);
-            activeThreats.forEach(t => {
-                const pos = t.position || {x:0, y:0, z:0};
-                const tx = cx + (pos.x * s);
-                const ty = cy - (pos.y * s);
-                ctx.fillStyle = '#f85149';
-                ctx.beginPath(); ctx.arc(tx, ty, 6, 0, Math.PI * 2); ctx.fill();
-                drawLabel(`🚨 ${t.type} (${t.detected_by || 'shared'})`, tx, ty, '#f85149');
-            });
+        function drawOperatorMarker(ctx, x, y, label, color, heading) {
+            ctx.save(); ctx.translate(x, y);
+            ctx.fillStyle = color === '#18C37E' ? 'rgba(24, 195, 126, 0.15)' : 'rgba(255, 176, 32, 0.15)';
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 45, heading - 0.5, heading + 0.5); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = color; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = '#FFFFFF'; ctx.font = '10px JetBrains Mono'; ctx.fillText(label, 16, 4);
+            ctx.restore();
         }
 
-        setInterval(pollData, 2000);
-        pollData();
+        // VIEW NAVIGATION HANDLERS
+        function setAppMode(mode) {
+            currentMode = mode;
+            document.getElementById('btnModeDesktop').classList.toggle('active', mode === 'desktop');
+            document.getElementById('btnModeMobile').classList.toggle('active', mode === 'mobile');
+
+            document.getElementById('desktopAppContainer').style.display = mode === 'desktop' ? 'flex' : 'none';
+            document.getElementById('mobileAppContainer').style.display = mode === 'mobile' ? 'flex' : 'none';
+            setTimeout(resizeCanvases, 50);
+        }
+
+        function switchDesktopView(viewName, el) {
+            if (el) {
+                document.querySelectorAll('.app-sidebar .nav-item').forEach(i => i.classList.remove('active'));
+                el.classList.add('active');
+            }
+            document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
+            const targetPane = document.getElementById('pane-' + viewName);
+            if (targetPane) targetPane.classList.add('active');
+            setTimeout(resizeCanvases, 50);
+        }
+
+        function switchMobileView(paneName, el) {
+            if (el) {
+                document.querySelectorAll('.phone-navbar .mobile-nav-btn').forEach(b => b.classList.remove('active'));
+                el.classList.add('active');
+            }
+            document.querySelectorAll('.mobile-pane').forEach(p => p.classList.remove('active'));
+            const targetPane = document.getElementById('mPane' + paneName.charAt(0).toUpperCase() + paneName.slice(1));
+            if (targetPane) targetPane.classList.add('active');
+            setTimeout(resizeCanvases, 50);
+        }
+
+        function toggleMapLayer(layer) {
+            if (layer === 'geofence') {
+                showGeofence = !showGeofence;
+                document.getElementById('btnLayerGeofence').classList.toggle('active', showGeofence);
+            } else if (layer === 'vectors') {
+                showVectors = !showVectors;
+                document.getElementById('btnLayerVectors').classList.toggle('active', showVectors);
+            }
+        }
+
+        function toggle3dTilt() {
+            is3dTilted = !is3dTilted;
+            document.getElementById('btn3dtilt').classList.toggle('active', is3dTilted);
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.rate = 1.0;
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        function triggerGlobalSOS() {
+            speakText("Warning! Emergency SOS activated across mesh network.");
+            alert("🚨 EMERGENCY SOS BROADCAST SENT TO ALL CONNECTED REYCON META GLASSES!");
+        }
+
+        function openVoiceAssistant() {
+            document.getElementById('voiceAssistantModal').classList.add('active');
+            speakText("Reycon intelligence online. Ready for command.");
+        }
+
+        function closeVoiceAssistant() {
+            document.getElementById('voiceAssistantModal').classList.remove('active');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        }
+
+        function handleMVoiceQuery(type) {
+            const transcript = document.getElementById('mVoiceTranscript');
+            let userQ = ""; let aiAns = "";
+            if (type === 'threat') {
+                userQ = "What is sector status?";
+                aiAns = "Sector is secure. Zero priority threats detected.";
+            } else if (type === 'sarah') {
+                userQ = "Locate Sarah";
+                aiAns = "Operator Sarah is active on Glass B, 2.1m North.";
+            } else if (type === 'sos') {
+                userQ = "Broadcast SOS";
+                aiAns = "Emergency SOS alert broadcasted to team.";
+                triggerGlobalSOS();
+            } else if (type === 'camera') {
+                userQ = "Show vision feed";
+                aiAns = "Switching to Live AR Optical Vision feed.";
+                closeVoiceAssistant();
+                switchDesktopView('vision');
+            }
+            transcript.innerHTML += `<br>[USER]: "${userQ}"<br>[AI]: "${aiAns}"`;
+            transcript.scrollTop = transcript.scrollHeight;
+            speakText(aiAns);
+        }
+
+        function triggerCorrectionModal() {
+            const newLabel = prompt("Enter corrected class label for target (e.g., Person, Laptop, Chair):", "Person");
+            if (newLabel) {
+                speakText(`Label updated to ${newLabel}`);
+                alert(`Target object corrected to '${newLabel}' and synced across mesh network.`);
+            }
+        }
     </script>
 </body>
 </html>

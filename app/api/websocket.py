@@ -107,7 +107,7 @@ async def websocket_mobile_endpoint(websocket: WebSocket):
                     for d in raw_dets:
                         if isinstance(d, dict):
                             parsed_dets.append(Detection(
-                                class_name=d.get("class_name", d.get("label", d.get("object_type", "truck"))),
+                                class_name=d.get("class_name") or d.get("label") or d.get("object_type") or "object",
                                 confidence=float(d.get("confidence", 0.9)),
                                 position=Position(
                                     x=float(d.get("position", {}).get("x", 0.0)) if isinstance(d.get("position"), dict) else 0.0,

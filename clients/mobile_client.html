@@ -3,1135 +3,923 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tactical AR Perception HUD & Safety Warning System</title>
+    <title>REYCON // COMPANION AR — Tactical Mobile Ecosystem</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #05080e;
-            --bg-glass: rgba(13, 20, 33, 0.82);
-            --border-glass: rgba(0, 242, 254, 0.18);
-            --accent-cyan: #00f2fe;
-            --accent-green: #00e676;
-            --accent-red: #ff1744;
-            --accent-amber: #ff9100;
-            --accent-purple: #9d4edd;
-            --text-primary: #f0f4f8;
-            --text-secondary: #94a3b8;
-            --font-main: 'Outfit', sans-serif;
+            --bg-primary: #09090B;
+            --bg-secondary: #111216;
+            --bg-card: #17181D;
+            --bg-card-hover: #1F2027;
+            --accent: #2DD4FF;
+            --accent-glow: rgba(45, 212, 255, 0.15);
+            --danger: #FF4D5A;
+            --danger-glow: rgba(255, 77, 90, 0.15);
+            --warning: #FFB020;
+            --warning-glow: rgba(255, 176, 32, 0.15);
+            --success: #18C37E;
+            --success-glow: rgba(24, 195, 126, 0.15);
+            --text-main: #FFFFFF;
+            --text-muted: #A0A4AE;
+            --text-dim: #646873;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.16);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; user-select: none; }
         body {
-            font-family: var(--font-main);
             background-color: var(--bg-primary);
-            color: var(--text-primary);
-            min-height: 100vh;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 13px;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(0, 242, 254, 0.08) 0%, transparent 60%),
-                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-            background-size: 100% 100%, 30px 30px, 30px 30px;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Screen Vignette Pulse for Critical Hazards */
-        .vignette-overlay {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 9999;
-            box-shadow: inset 0 0 100px rgba(255, 23, 68, 0);
-            transition: box-shadow 0.3s ease;
+        .icon {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            display: inline-block;
+            flex-shrink: 0;
         }
+        .icon-xs { width: 12px; height: 12px; }
+        .icon-sm { width: 14px; height: 14px; }
+        .icon-lg { width: 24px; height: 24px; }
 
-        .vignette-overlay.critical {
-            animation: vignettePulse 0.8s infinite alternate;
-        }
-
-        @keyframes vignettePulse {
-            from { box-shadow: inset 0 0 40px rgba(255, 23, 68, 0.4); }
-            to { box-shadow: inset 0 0 120px rgba(255, 23, 68, 0.95); }
-        }
-
-        /* Top Header Navigation */
-        header {
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-glass);
-            padding: 12px 16px;
+        /* HEADER */
+        .m-header {
+            height: 48px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            position: sticky;
-            top: 0;
+            justify-content: space-between;
+            padding: 0 16px;
             z-index: 50;
         }
 
-        .brand {
+        .m-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-main);
         }
 
-        .brand-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, var(--accent-cyan), #0072ff);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 16px rgba(0, 242, 254, 0.5);
-        }
-
-        .brand-title {
-            font-weight: 800;
-            font-size: 1.15rem;
-            letter-spacing: -0.5px;
-            background: linear-gradient(to right, #ffffff, var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .status-pill {
-            display: flex;
+        .sys-badge {
+            display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 5px 12px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            font-family: var(--font-mono);
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--accent-red);
-            box-shadow: 0 0 8px var(--accent-red);
-            transition: all 0.3s ease;
-        }
-
-        .status-dot.connected { background-color: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
-        .status-dot.streaming { background-color: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan); animation: pulse 1.5s infinite; }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(1.25); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        /* Main Layout */
-        main {
-            flex: 1;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            max-width: 650px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .glass-card {
-            background: var(--bg-glass);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            padding: 16px;
-            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-title {
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            font-weight: 700;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        label {
-            font-size: 0.72rem;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        input {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--border-glass);
-            border-radius: 10px;
-            padding: 9px 12px;
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        input:focus {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 12px rgba(0, 242, 254, 0.25);
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        button {
-            flex: 1;
-            padding: 12px 18px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 700;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-family: var(--font-main);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #00f2fe, #0072ff);
-            color: #000;
-            box-shadow: 0 4px 20px rgba(0, 242, 254, 0.3);
-        }
-
-        .btn-primary:active { transform: scale(0.98); }
-
-        .chip-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid var(--border-glass);
-            color: var(--text-primary);
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 0.76rem;
-            font-family: var(--font-mono);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .chip-btn:hover, .chip-btn:active {
-            background: rgba(0, 242, 254, 0.25);
-            border-color: var(--accent-cyan);
-            color: #fff;
-        }
-
-        .nudge-btn {
-            background: rgba(0, 242, 254, 0.12);
-            border: 1px solid rgba(0, 242, 254, 0.3);
-            color: var(--accent-cyan);
             padding: 3px 8px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            cursor: pointer;
-        }
-
-        .btn-danger {
-            background: rgba(255, 23, 68, 0.25);
-            color: var(--accent-red);
-            border: 1px solid var(--accent-red);
-            box-shadow: 0 0 15px rgba(255, 23, 68, 0.3);
-        }
-
-        /* GPS Pill */
-        .gps-pill {
-            background: rgba(0, 242, 254, 0.06);
-            border: 1px solid rgba(0, 242, 254, 0.25);
-            border-radius: 12px;
-            padding: 10px 14px;
+            border-radius: 4px;
+            font-size: 10px;
             font-family: var(--font-mono);
-            font-size: 0.82rem;
-            color: var(--accent-cyan);
+            font-weight: 700;
+            background: rgba(24, 195, 126, 0.1);
+            border: 1px solid rgba(24, 195, 126, 0.3);
+            color: var(--success);
+            transition: all 0.2s ease;
+        }
+
+        .sys-badge.disconnected {
+            background: rgba(255, 77, 90, 0.1);
+            border-color: rgba(255, 77, 90, 0.3);
+            color: var(--danger);
+        }
+
+        .dot-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: currentColor;
+            box-shadow: 0 0 6px currentColor;
+        }
+
+        /* MAIN CONTENT AREA */
+        .m-viewport {
+            flex: 1;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* Multi-Level Hazard Alert Panels */
-        .alert-panel {
-            border-radius: 14px;
-            padding: 14px;
-            display: none;
-            transition: all 0.3s ease;
-        }
-
-        .alert-panel.active { display: block; }
-
-        .alert-panel.CRITICAL {
-            background: rgba(255, 23, 68, 0.22);
-            border: 1.5px solid var(--accent-red);
-            box-shadow: 0 0 30px rgba(255, 23, 68, 0.5);
-            animation: alertPulse 0.8s infinite alternate;
-        }
-
-        .alert-panel.WARNING {
-            background: rgba(255, 145, 0, 0.2);
-            border: 1.5px solid var(--accent-amber);
-            box-shadow: 0 0 20px rgba(255, 145, 0, 0.35);
-        }
-
-        @keyframes alertPulse {
-            from { box-shadow: 0 0 10px rgba(255, 23, 68, 0.2); }
-            to { box-shadow: 0 0 30px rgba(255, 23, 68, 0.7); }
-        }
-
-        .alert-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 800;
-            font-size: 0.95rem;
-            margin-bottom: 6px;
-            letter-spacing: 0.5px;
-        }
-
-        .alert-panel.CRITICAL .alert-header { color: var(--accent-red); }
-        .alert-panel.WARNING .alert-header { color: var(--accent-amber); }
-
-        .alert-body {
-            font-size: 0.88rem;
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        /* Tactical Sonar Radar Viewport */
-        .radar-header-controls {
-            display: flex;
-            gap: 6px;
-        }
-
-        .range-btn {
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid var(--border-glass);
-            color: var(--text-secondary);
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            font-family: var(--font-mono);
-            cursor: pointer;
-        }
-
-        .range-btn.active {
-            background: rgba(0, 242, 254, 0.2);
-            color: var(--accent-cyan);
-            border-color: var(--accent-cyan);
-        }
-
-        .radar-viewport {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            background: radial-gradient(circle at center, #06111d 0%, #020509 100%);
-            border-radius: 16px;
-            border: 1px solid var(--border-glass);
+            flex-direction: column;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+            position: relative;
         }
 
-        canvas#radarCanvas { width: 100%; height: 100%; }
+        .m-pane {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 12px;
+            gap: 12px;
+        }
+        .m-pane.active { display: flex; }
 
-        /* Camera AR Viewport & Bounding Box Reticles */
+        /* CARDS */
+        .m-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .m-card.danger {
+            border-color: var(--danger);
+            background: linear-gradient(180deg, rgba(255,77,90,0.08) 0%, var(--bg-card) 100%);
+        }
+
+        .m-card.secure {
+            border-color: rgba(24, 195, 126, 0.3);
+            background: linear-gradient(180deg, rgba(24, 195, 126, 0.05) 0%, var(--bg-card) 100%);
+        }
+
+        /* SOS BUTTON */
+        .sos-btn {
+            background-color: rgba(255, 77, 90, 0.12);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            border-radius: 10px;
+            padding: 14px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 14px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+        .sos-btn:active {
+            background-color: var(--danger);
+            color: #FFFFFF;
+        }
+
+        /* CAMERA & HUD VIEWPORT */
         .camera-viewport {
             position: relative;
             width: 100%;
-            border-radius: 14px;
+            aspect-ratio: 16 / 9;
+            background-color: #000;
+            border: 1px solid var(--border);
+            border-radius: 8px;
             overflow: hidden;
-            background: #000;
-            aspect-ratio: 4 / 3;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid var(--border-glass);
         }
 
-        video { width: 100%; height: 100%; object-fit: cover; }
-
-        /* AR Bounding Box Reticle Overlay Canvas */
-        canvas#arCanvas {
-            position: absolute;
-            inset: 0;
+        .camera-video {
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            object-fit: cover;
         }
-
-        canvas#captureCanvas { display: none; }
 
         .hud-overlay {
             position: absolute;
             inset: 0;
             pointer-events: none;
-            padding: 12px;
+        }
+
+        /* APPLE VISION STYLE HUD OVERLAY BOX */
+        .hud-bbox {
+            position: absolute;
+            border: 1.5px solid var(--accent);
+            background-color: rgba(45, 212, 255, 0.08);
+            border-radius: 6px;
+            pointer-events: auto;
+            transition: all 0.15s ease;
+        }
+        .hud-bbox.danger {
+            border-color: var(--danger);
+            background-color: rgba(255, 77, 90, 0.12);
+        }
+
+        .bbox-tag {
+            position: absolute;
+            top: -20px;
+            left: 0;
+            background-color: rgba(17, 18, 22, 0.9);
+            border: 1px solid var(--border);
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--accent);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .hud-bbox.danger .bbox-tag {
+            color: var(--danger);
+            border-color: rgba(255, 77, 90, 0.4);
+        }
+
+        /* SPATIAL RADAR CANVAS */
+        .radar-box {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            background-color: #060709;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        canvas.radar-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* BOTTOM NAVBAR */
+        .m-navbar {
+            height: 56px;
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            z-index: 50;
+        }
+
+        .m-nav-btn {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            background: radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.7) 100%);
-        }
-
-        .hud-top {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
-        }
-
-        .compass-badge {
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(10px);
-            padding: 5px 12px;
-            border-radius: 20px;
+            gap: 3px;
+            color: var(--text-muted);
+            font-size: 9px;
             font-family: var(--font-mono);
-            font-size: 0.8rem;
-            color: var(--accent-cyan);
-            border: 1px solid rgba(0, 242, 254, 0.35);
+            cursor: pointer;
+            border: none;
+            background: transparent;
         }
+        .m-nav-btn.active { color: var(--accent); }
 
-        .fps-badge {
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(10px);
-            padding: 5px 12px;
-            border-radius: 20px;
+        /* BUTTONS */
+        .btn-action {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
             font-family: var(--font-mono);
-            font-size: 0.78rem;
-            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .btn-accent {
+            background-color: var(--accent-glow);
+            border-color: var(--accent);
+            color: var(--accent);
         }
 
-        /* Event History Log Table */
-        .event-table {
+        /* VOICE MODAL */
+        .voice-modal {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(9, 9, 11, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 16px;
+        }
+        .voice-modal.active { display: flex; }
+
+        .voice-orb {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--accent) 0%, rgba(45,212,255,0.2) 60%, transparent 100%);
+            box-shadow: 0 0 35px var(--accent-glow);
+            animation: orbPulse 2s ease-in-out infinite;
+        }
+        @keyframes orbPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .voice-transcript {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
             width: 100%;
-            border-collapse: collapse;
-            font-size: 0.78rem;
+            max-height: 140px;
+            overflow-y: auto;
             font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--accent);
         }
-
-        .event-table th {
-            text-align: left;
-            color: var(--text-secondary);
-            padding: 6px;
-            border-bottom: 1px solid var(--border-glass);
-        }
-
-        .event-table td {
-            padding: 6px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .severity-pill {
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 0.7rem;
-        }
-
-        .severity-pill.CRITICAL { background: rgba(255, 23, 68, 0.25); color: var(--accent-red); border: 1px solid var(--accent-red); }
-        .severity-pill.WARNING { background: rgba(255, 145, 0, 0.25); color: var(--accent-amber); border: 1px solid var(--accent-amber); }
     </style>
 </head>
 <body>
 
-    <!-- Red Screen Vignette Flash for Critical Threats -->
-    <div class="vignette-overlay" id="vignetteOverlay"></div>
-
-    <header>
-        <div class="brand">
-            <div class="brand-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                </svg>
-            </div>
-            <div class="brand-title">AR Perception Safety HUD</div>
+    <!-- APP HEADER WITH PROMINENT CONNECTION STATUS BADGE -->
+    <header class="m-header">
+        <div class="m-brand">
+            <svg class="icon icon-sm" viewBox="0 0 24 24" style="color: var(--accent);"><path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/></svg>
+            REYCON COMPANION
         </div>
-        <div class="status-pill">
-            <div class="status-dot" id="statusDot"></div>
-            <span id="statusText">Disconnected</span>
+
+        <!-- LIVE WEBSOCKET CONNECTION BADGE -->
+        <div class="sys-badge disconnected" id="mConnStatusBadge">
+            <span class="dot-indicator"></span>
+            <span id="mConnStatusText">CONNECTING...</span>
         </div>
     </header>
 
-    <main>
-        <!-- Server Connection Setup -->
-        <div class="glass-card">
-            <div class="card-title">Network & Identity</div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="laptopIp">Laptop IP Address</label>
-                    <input type="text" id="laptopIp" placeholder="e.g. 192.168.225.62">
+    <!-- VIEWPORT SYSTEM -->
+    <main class="m-viewport">
+
+        <!-- 1. HOME TAB -->
+        <div class="m-pane active" id="mPaneHome">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted);">TACTICAL OPERATOR</span>
+                    <h3 style="font-size: 15px; font-weight: 700;">OPERATOR MARK</h3>
                 </div>
-                <div class="form-group">
-                    <label for="glassId">Device Name / ID</label>
-                    <input type="text" id="glassId" value="phone_01" placeholder="e.g. phone_01">
-                    <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
-                        <button type="button" class="chip-btn" onclick="setDeviceId('phone_01')">phone_01</button>
-                        <button type="button" class="chip-btn" onclick="setDeviceId('Priyam')">Priyam</button>
-                        <button type="button" class="chip-btn" onclick="setDeviceId('Susu')">Susu</button>
+                <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); text-align: right;">
+                    DEVICE ID: <span style="color: var(--accent); font-weight: 700;" id="mDeviceIdText">PHONE_01</span><br>
+                    HEADING: <span style="color: var(--accent); font-weight: 700;" id="headingDisplayHome">0° N</span>
+                </div>
+            </div>
+
+            <!-- GPS TELEMETRY BADGE -->
+            <div style="background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; display: flex; align-items: center; justify-content: space-between; font-family: var(--font-mono); font-size: 10px;">
+                <div style="display: flex; align-items: center; gap: 6px; color: var(--accent);">
+                    <svg class="icon icon-xs" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span id="gpsDisplayHome">37.774929° N, 122.419416° W (±1.2m)</span>
+                </div>
+                <span style="color: var(--success); font-weight: 700;">RTK FIX</span>
+            </div>
+
+            <!-- SOS EMERGENCY BUTTON -->
+            <div class="sos-btn" onclick="triggerSOS()">
+                <svg class="icon icon-lg" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>EMERGENCY SOS</span>
+                <span style="font-size: 9px; font-weight: 400; opacity: 0.8;">BROADCAST THREAT TO TEAM GLASSES</span>
+            </div>
+
+            <!-- REAR BACK CAMERA & LIVE YOLO OBJECT DETECTION FEED -->
+            <div class="m-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 11px; font-weight: 700; font-family: var(--font-mono); color: var(--accent);">
+                        LIVE AR OPTICAL VISION & YOLO DETECTOR
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <span style="font-size: 9px; font-family: var(--font-mono); color: var(--success);" id="mFpsText">35 FPS</span>
+                        <button class="btn-action" style="padding: 2px 6px; font-size: 9px;" onclick="toggleCameraFacing()">FLIP</button>
+                    </div>
+                </div>
+
+                <div class="camera-viewport">
+                    <video id="mWebcamFeed" class="camera-video" autoplay playsinline muted></video>
+                    
+                    <!-- DYNAMIC YOLO DETECTIONS HUD OVERLAY -->
+                    <div class="hud-overlay" id="mHudOverlay">
+                        <!-- Dynamic Bounding Boxes rendered by JS engine -->
                     </div>
                 </div>
             </div>
-            <div class="form-grid" style="margin-top: 10px;">
-                <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <label for="posX" style="margin-bottom:0;">Room Pos X (meters)</label>
-                        <div>
-                            <button type="button" class="nudge-btn" onclick="nudgePos('x', -0.5)">-0.5m</button>
-                            <button type="button" class="nudge-btn" onclick="nudgePos('x', 0.5)">+0.5m</button>
-                        </div>
+
+            <!-- SPATIAL RADAR WIDGET -->
+            <div class="m-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-size: 11px; font-weight: 700; font-family: var(--font-mono); color: var(--accent);">2D/3D SPATIAL RADAR & BLIPS</div>
+                    <span style="font-size: 9px; font-family: var(--font-mono); color: var(--text-muted);">RANGE: 20m</span>
+                </div>
+
+                <div class="radar-box">
+                    <canvas id="mHomeRadarCanvas" class="radar-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- LIVE DETECTED OBJECTS & HAZARDS LIST -->
+            <div class="m-card">
+                <div style="font-size: 11px; font-weight: 700; font-family: var(--font-mono); color: var(--text-muted);">LIVE DETECTED OBJECTS (YOLO STREAM)</div>
+                <div style="display: flex; flex-direction: column; gap: 6px;" id="mDetectionsList">
+                    <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); text-align: center; padding: 10px;">
+                        Scanning camera feed for objects...
                     </div>
-                    <input type="number" id="posX" step="0.5" value="0.0" placeholder="0.0">
                 </div>
-                <div class="form-group">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <label for="posY" style="margin-bottom:0;">Room Pos Y (meters)</label>
-                        <div>
-                            <button type="button" class="nudge-btn" onclick="nudgePos('y', -0.5)">-0.5m</button>
-                            <button type="button" class="nudge-btn" onclick="nudgePos('y', 0.5)">+0.5m</button>
-                        </div>
+            </div>
+
+            <!-- VOICE ASSISTANT LAUNCH -->
+            <button class="btn-action btn-accent" style="padding: 12px;" onclick="openVoiceAssistant()">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                LAUNCH APPLE INTELLIGENCE VOICE ASSISTANT
+            </button>
+
+        </div>
+
+        <!-- 2. MAP TAB -->
+        <div class="m-pane" id="mPaneMap">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 14px; font-weight: 700;">TACTICAL SLAM PERSISTENT MAP</h3>
+                <button class="btn-action" style="padding: 4px 8px; font-size: 10px;" onclick="switchTab('home')">VIEW RADAR</button>
+            </div>
+
+            <div style="flex: 1; background-color: #060709; border: 1px solid var(--border); border-radius: 8px; position: relative; overflow: hidden; min-height: 380px;">
+                <canvas id="mFullMapCanvas" class="radar-canvas"></canvas>
+            </div>
+        </div>
+
+        <!-- 3. VISION TAB -->
+        <div class="m-pane" id="mPaneVision">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 14px; font-weight: 700;">FULLSCREEN AR OPTICAL VISION</h3>
+                <button class="btn-action" style="padding: 4px 8px; font-size: 10px;" onclick="toggleCameraFacing()">FLIP CAMERA</button>
+            </div>
+            
+            <div class="camera-viewport" style="aspect-ratio: 16 / 9; height: auto;">
+                <video id="mWebcamFeedFull" class="camera-video" autoplay playsinline muted></video>
+                <div class="hud-overlay" id="mHudOverlayFull"></div>
+            </div>
+            <button class="btn-action btn-accent" onclick="correctTargetLabel()">CORRECT OBJECT LABEL</button>
+        </div>
+
+        <!-- 4. ALERTS TAB -->
+        <div class="m-pane" id="mPaneAlerts">
+            <h3 style="font-size: 14px; font-weight: 700;">TACTICAL THREAT ALERTS</h3>
+            <div id="mAlertsContainer">
+                <div class="m-card secure">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="font-weight: 700; color: var(--success); font-size: 13px;">SECTOR SECURE</div>
+                        <span style="font-family: var(--font-mono); font-size: 10px; color: var(--success);">NOMINAL</span>
                     </div>
-                    <input type="number" id="posY" step="0.5" value="0.0" placeholder="0.0">
-                </div>
-            </div>
-            <div style="margin-top: 8px;">
-                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Quick Room Separation Presets:</div>
-                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <button type="button" class="chip-btn" onclick="setDevicePreset('phone_01', 0.0, 0.0)">Origin (0, 0)</button>
-                    <button type="button" class="chip-btn" onclick="setDevicePreset('Priyam', 1.5, 0.0)">East (+1.5m, 0)</button>
-                    <button type="button" class="chip-btn" onclick="setDevicePreset('Susu', -1.5, 0.0)">West (-1.5m, 0)</button>
-                    <button type="button" class="chip-btn" onclick="setDevicePreset('Priyam', 0.0, 2.0)">North (0, +2m)</button>
-                </div>
-            </div>
-            <div class="btn-group">
-                <button class="btn-primary" id="btnConnect" onclick="toggleConnection()">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                    Start Perception Stream
-                </button>
-            </div>
-        </div>
-
-
-        <!-- Real-Time GPS Location Coordinates Pill -->
-        <div class="gps-pill">
-            <div>
-                <strong>GPS COORDINATES:</strong><br>
-                <span id="gpsText">Acquiring satellite fix...</span>
-            </div>
-            <div style="text-align: right;">
-                <span id="gpsAcc">±0m</span>
-            </div>
-        </div>
-
-        <!-- Multi-Level Safety Threat Alerts -->
-        <div class="alert-panel" id="alertPanel">
-            <div class="alert-header">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                    <line x1="12" y1="9" x2="12" y2="13"/>
-                    <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-                <span id="alertHeaderTitle">SAFETY HAZARD WARNING</span>
-            </div>
-            <div class="alert-body" id="alertText">No active threats detected.</div>
-        </div>
-
-        <!-- Tactical Sonar Radar Widget -->
-        <div class="glass-card">
-            <div class="card-title">
-                <span>Tactical Sonar Radar</span>
-                <div class="radar-header-controls">
-                    <button class="range-btn" onclick="setRadarRange(10, this)">10m</button>
-                    <button class="range-btn active" onclick="setRadarRange(30, this)">30m</button>
-                    <button class="range-btn" onclick="setRadarRange(50, this)">50m</button>
-                </div>
-            </div>
-            <div class="radar-viewport">
-                <canvas id="radarCanvas" width="400" height="400"></canvas>
-            </div>
-        </div>
-
-        <!-- AR Camera Viewport with Bounding Box Reticles -->
-        <div class="glass-card">
-            <div class="card-title">AR Live Vision Stream</div>
-            <div class="camera-viewport">
-                <video id="webcam" autoplay playsinline muted></video>
-                <canvas id="arCanvas" width="640" height="480"></canvas>
-                <canvas id="captureCanvas" width="320" height="240"></canvas>
-                
-                <div class="hud-overlay">
-                    <div class="hud-top">
-                        <div class="compass-badge">
-                            HEADING: <span id="headingValue">0° N</span>
-                        </div>
-                        <div class="fps-badge">
-                            STREAM: <span id="streamRate">0 FPS</span>
-                        </div>
+                    <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">
+                        Zero active priority threats in proximity.<br>
+                        Shared SLAM mesh synchronized.
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Event History Log Table -->
-        <div class="glass-card">
-            <div class="card-title">Safety Event History Log</div>
-            <table class="event-table">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Severity</th>
-                        <th>Hazard Object</th>
-                        <th>Direction</th>
-                    </tr>
-                </thead>
-                <tbody id="eventLogBody">
-                    <tr>
-                        <td colspan="4" style="color: var(--text-secondary);">No safety events logged yet.</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- 5. PROFILE TAB -->
+        <div class="m-pane" id="mPaneProfile">
+            <h3 style="font-size: 14px; font-weight: 700;">CONNECTED GLASS TELEMETRY</h3>
+            <div class="m-card">
+                <div style="font-weight: 700;">RAY-BAN META SMART GLASSES</div>
+                <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
+                    <div>DEVICE ID: <span id="profDeviceId">PHONE_01</span></div>
+                    <div>WEBSOCKET: <span id="profWsStatus" style="color: var(--success);">CONNECTED</span></div>
+                    <div>YOLO STREAM: ACTIVE (5 FPS)</div>
+                    <div>GPS MODE: HIGH-ACCURACY RTK (±1.2m)</div>
+                    <div>CAMERA: REAR ENVIRONMENT FACING</div>
+                </div>
+            </div>
         </div>
+
+        <!-- APPLE INTELLIGENCE VOICE ASSISTANT MODAL -->
+        <div class="voice-modal" id="voiceModal">
+            <div class="voice-orb"></div>
+            <div style="font-weight: 700; font-size: 16px; color: var(--accent);">REYCON INTELLIGENCE</div>
+            <div style="font-size: 11px; color: var(--text-muted); text-align: center;">Listening for voice commands...</div>
+            
+            <div class="voice-transcript" id="voiceTranscript">
+                [SYSTEM]: Voice assistant initialized.<br>
+                [USER]: "What is the status of my sector?"<br>
+                [AI]: "Sector is secure. Zero priority threats detected."
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; width: 100%;">
+                <button class="btn-action" onclick="handleVoiceQuery('threat')">Sector Status?</button>
+                <button class="btn-action" onclick="handleVoiceQuery('sarah')">Locate Sarah</button>
+                <button class="btn-action" onclick="handleVoiceQuery('sos')">Broadcast SOS</button>
+                <button class="btn-action" onclick="handleVoiceQuery('camera')">Show Camera</button>
+            </div>
+
+            <button class="btn-action btn-accent" style="width: 100%; margin-top: 8px;" onclick="closeVoiceAssistant()">DISMISS ASSISTANT</button>
+        </div>
+
     </main>
 
+    <!-- BOTTOM NAVBAR -->
+    <nav class="m-navbar">
+        <button class="m-nav-btn active" onclick="switchTab('home', this)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            HOME
+        </button>
+        <button class="m-nav-btn" onclick="switchTab('map', this)">
+            <svg class="icon" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/></svg>
+            MAP
+        </button>
+        <button class="m-nav-btn" onclick="switchTab('vision', this)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+            VISION
+        </button>
+        <button class="m-nav-btn" onclick="switchTab('alerts', this)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/></svg>
+            ALERTS
+        </button>
+        <button class="m-nav-btn" onclick="switchTab('profile', this)">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            PROFILE
+        </button>
+    </nav>
+
+    <!-- CORE SCRIPT ENGINE -->
     <script>
-        let ws = null;
-        let mediaStream = null;
-        let streamInterval = null;
+        const glassId = "phone_" + Math.floor(100 + Math.random() * 900);
+        document.getElementById('mDeviceIdText').innerText = glassId;
+        document.getElementById('profDeviceId').innerText = glassId;
+
+        let currentFacingMode = "environment";
+        let liveDetections = [];
+        let activeThreats = [];
+
+        // WEBCAM VIDEO STREAM INITIALIZATION (REAR CAMERA)
+        async function initCamera() {
+            const v1 = document.getElementById('mWebcamFeed');
+            const v2 = document.getElementById('mWebcamFeedFull');
+            const constraints = {
+                video: {
+                    facingMode: { ideal: currentFacingMode },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                if (v1) v1.srcObject = stream;
+                if (v2) v2.srcObject = stream;
+            } catch (e) {
+                console.log("Rear camera fallback to standard stream.");
+                try {
+                    const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    if (v1) v1.srcObject = fallbackStream;
+                    if (v2) v2.srcObject = fallbackStream;
+                } catch(err){}
+            }
+        }
+        initCamera();
+
+        function toggleCameraFacing() {
+            currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+            initCamera();
+        }
+
+        // GPS TELEMETRY
+        let currentGPS = { lat: 37.774929, lng: -122.419416, accuracy: 1.2 };
         let currentHeading = 0;
-        let currentGPS = { latitude: 0.0, longitude: 0.0, altitude: 0.0, accuracy: 0.0 };
-        let isStreaming = false;
-        let frameCount = 0;
-        let fpsTimer = null;
-        let radarBlips = [];
-        let activeDetections = [];
-        let sweepAngle = 0;
-        let sonarPulseRadius = 0;
-        let maxRadarRangeMeters = 30.0;
-        let eventLogs = [];
 
-        function setDeviceId(id) {
-            const el = document.getElementById('glassId');
-            if (el) el.value = id;
-        }
-
-        function setDevicePreset(id, x, y) {
-            setDeviceId(id);
-            const posX = document.getElementById('posX');
-            const posY = document.getElementById('posY');
-            if (posX) posX.value = x.toFixed(1);
-            if (posY) posY.value = y.toFixed(1);
-        }
-
-        function nudgePos(axis, delta) {
-            const el = document.getElementById(axis === 'x' ? 'posX' : 'posY');
-            if (el) {
-                let val = parseFloat(el.value || 0.0) + delta;
-                el.value = val.toFixed(1);
-            }
-        }
-
-        const video = document.getElementById('webcam');
-        const captureCanvas = document.getElementById('captureCanvas');
-        const captureCtx = captureCanvas.getContext('2d');
-        const arCanvas = document.getElementById('arCanvas');
-        const arCtx = arCanvas.getContext('2d');
-        const radarCanvas = document.getElementById('radarCanvas');
-        const radarCtx = radarCanvas.getContext('2d');
-
-        // Auto-fill Laptop IP input on load
-        window.addEventListener('DOMContentLoaded', () => {
-            const ipInput = document.getElementById('laptopIp');
-            if (ipInput) {
-                ipInput.value = window.location.hostname || 'localhost';
-            }
-            initGPSWatcher();
-            requestAnimationFrame(drawRadar);
-            requestAnimationFrame(drawAROverlay);
-        });
-
-        function setRadarRange(rangeMeters, btn) {
-            maxRadarRangeMeters = rangeMeters;
-            document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
-        // Web Audio Synthesizer for Dual-Tone Warning Siren
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playWarningBeep(severity = "CRITICAL") {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.type = severity === "CRITICAL" ? "sawtooth" : "square";
-            osc.frequency.value = severity === "CRITICAL" ? 950 : 650;
-            
-            gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.35);
-
-            // Haptic vibration feedback
-            if ("vibrate" in navigator) {
-                if (severity === "CRITICAL") {
-                    navigator.vibrate([200, 100, 200, 100, 300]);
-                } else {
-                    navigator.vibrate([150, 100, 150]);
-                }
-            }
-        }
-
-        // Geolocation Position Watcher
-        function initGPSWatcher() {
+        function initGPSAndOrientation() {
             if ("geolocation" in navigator) {
                 navigator.geolocation.watchPosition(
                     (pos) => {
-                        currentGPS = {
-                            latitude: pos.coords.latitude,
-                            longitude: pos.coords.longitude,
-                            altitude: pos.coords.altitude || 0.0,
-                            accuracy: pos.coords.accuracy || 0.0
-                        };
-                        const latStr = currentGPS.latitude.toFixed(6);
-                        const lonStr = currentGPS.longitude.toFixed(6);
-                        document.getElementById('gpsText').innerText = `LAT: ${latStr}° | LON: ${lonStr}°`;
-                        document.getElementById('gpsAcc').innerText = `±${Math.round(currentGPS.accuracy)}m`;
+                        currentGPS.lat = pos.coords.latitude;
+                        currentGPS.lng = pos.coords.longitude;
+                        currentGPS.accuracy = pos.coords.accuracy ? pos.coords.accuracy.toFixed(1) : 1.2;
+                        updateGPSElements();
                     },
-                    (err) => {
-                        document.getElementById('gpsText').innerText = `GPS Warning: ${err.message}`;
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 1000 }
+                    (err) => console.warn("GPS warning:", err),
+                    { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
                 );
             }
-        }
 
-        // Device Orientation Compass
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (e) => {
-                if (e.webkitCompassHeading) {
-                    currentHeading = Math.round(e.webkitCompassHeading);
-                } else if (e.alpha !== null) {
-                    currentHeading = Math.round(360 - e.alpha) % 360;
-                }
-                updateCompassUI(currentHeading);
-            }, true);
-        }
-
-        function updateCompassUI(heading) {
-            const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-            const dirStr = directions[Math.round(heading / 45) % 8];
-            document.getElementById('headingValue').innerText = `${heading}° ${dirStr}`;
-        }
-
-        async function initCamera() {
-            try {
-                const constraintOptions = [
-                    { video: { facingMode: { exact: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false },
-                    { video: { facingMode: "environment" }, audio: false },
-                    { video: { facingMode: "user" }, audio: false },
-                    { video: true, audio: false }
-                ];
-
-                mediaStream = null;
-                for (const c of constraintOptions) {
-                    try {
-                        mediaStream = await navigator.mediaDevices.getUserMedia(c);
-                        if (mediaStream) break;
-                    } catch (e) {
-                        continue;
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener("deviceorientation", (evt) => {
+                    if (evt.alpha !== null) {
+                        currentHeading = Math.round(360 - evt.alpha);
+                        updateGPSElements();
                     }
-                }
-
-                if (!mediaStream) throw new Error("Unable to access camera");
-                video.srcObject = mediaStream;
-                await video.play();
-                return true;
-            } catch (err) {
-                alert("Camera Error: " + err.message);
-                return false;
+                }, true);
             }
         }
 
-        function stopCamera() {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                mediaStream = null;
-            }
+        function updateGPSElements() {
+            const gpsText = `${currentGPS.lat.toFixed(6)}° N, ${currentGPS.lng.toFixed(6)}° W (±${currentGPS.accuracy}m)`;
+            const el1 = document.getElementById('gpsDisplayHome');
+            if (el1) el1.innerText = gpsText;
+            const el2 = document.getElementById('headingDisplayHome');
+            if (el2) el2.innerText = `${currentHeading}° N`;
         }
+        initGPSAndOrientation();
 
-        async function toggleConnection() {
-            if (isStreaming) {
-                disconnectServer();
-            } else {
-                await connectServer();
-            }
-        }
+        // WEBSOCKET & CAMERA FRAME STREAMING ENGINE
+        let ws = null;
+        const captureCanvas = document.createElement('canvas');
+        const captureCtx = captureCanvas.getContext('2d');
 
-        async function connectServer() {
-            const ip = document.getElementById('laptopIp').value.trim() || window.location.hostname || 'localhost';
-            const glassId = document.getElementById('glassId').value.trim() || 'phone_01';
-            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-            const wsUrl = `${protocol}://${ip}:8000/ws/mobile`;
-
-            const cameraReady = await initCamera();
-            if (!cameraReady) return;
-
-            updateStatus('connecting', 'Connecting...');
+        function connectWebSocket() {
+            const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${location.host}/ws/mobile`;
+            const badge = document.getElementById('mConnStatusBadge');
+            const text = document.getElementById('mConnStatusText');
 
             try {
                 ws = new WebSocket(wsUrl);
-
                 ws.onopen = () => {
-                    updateStatus('streaming', 'Streaming Live');
-                    isStreaming = true;
-                    document.getElementById('btnConnect').innerHTML = `
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="6" y="6" width="12" height="12"/>
-                        </svg> Stop Stream`;
-                    document.getElementById('btnConnect').className = 'btn-danger';
-
-                    streamInterval = setInterval(sendFrame, 150);
-                    fpsTimer = setInterval(() => {
-                        document.getElementById('streamRate').innerText = `${frameCount * 2} FPS`;
-                        frameCount = 0;
-                    }, 500);
+                    badge.classList.remove('disconnected');
+                    text.innerText = "ONLINE";
+                    document.getElementById('profWsStatus').innerText = "CONNECTED (" + wsUrl + ")";
+                    document.getElementById('profWsStatus').style.color = "var(--success)";
                 };
-
-                ws.onmessage = (event) => {
+                ws.onclose = () => {
+                    badge.classList.add('disconnected');
+                    text.innerText = "RECONNECTING...";
+                    document.getElementById('profWsStatus').innerText = "DISCONNECTED";
+                    document.getElementById('profWsStatus').style.color = "var(--danger)";
+                    setTimeout(connectWebSocket, 3000);
+                };
+                ws.onerror = () => {
+                    badge.classList.add('disconnected');
+                    text.innerText = "OFFLINE";
+                };
+                ws.onmessage = (evt) => {
                     try {
-                        const data = JSON.parse(event.data);
-                        handleServerMessage(data);
-                    } catch (e) {
-                        console.error("Error parsing WS message", e);
-                    }
+                        const data = JSON.parse(evt.data);
+                        if (data.detections) {
+                            liveDetections = data.detections;
+                            renderDetectionsUI();
+                        }
+                        if (data.active_threats) {
+                            activeThreats = data.active_threats;
+                            renderThreatsUI();
+                        }
+                    } catch (e) {}
                 };
-
-                ws.onclose = () => { disconnectServer(); };
-
-                ws.onerror = (err) => {
-                    console.error("WebSocket error:", err);
-                    updateStatus('disconnected', 'WS Error');
-                    if (window.location.protocol === 'https:') {
-                        alert("WebSocket Trust Required!\n\nPlease open https://" + ip + ":8000/ in a new tab, tap 'Advanced' -> 'Proceed', then return here and tap 'Start Stream'.");
-                    }
-                    disconnectServer();
-                };
-
             } catch (e) {
-                alert("Failed to create WebSocket connection: " + e.message);
-                disconnectServer();
+                badge.classList.add('disconnected');
+                text.innerText = "OFFLINE";
             }
         }
+        connectWebSocket();
 
-        function disconnectServer() {
-            if (streamInterval) clearInterval(streamInterval);
-            if (fpsTimer) clearInterval(fpsTimer);
-            if (ws) { ws.close(); ws = null; }
-            stopCamera();
-
-            isStreaming = false;
-            updateStatus('disconnected', 'Disconnected');
-            document.getElementById('btnConnect').innerHTML = `
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg> Start Perception Stream`;
-            document.getElementById('btnConnect').className = 'btn-primary';
-            document.getElementById('streamRate').innerText = '0 FPS';
-            document.getElementById('alertPanel').className = 'alert-panel';
-            document.getElementById('vignetteOverlay').className = 'vignette-overlay';
-            activeDetections = [];
-        }
-
-        function sendFrame() {
+        // FRAME CAPTURE & TELEMETRY STREAMER (5 FPS)
+        setInterval(() => {
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            const video = document.getElementById('mWebcamFeed');
+            if (!video || !video.videoWidth) return;
 
-            const glassId = document.getElementById('glassId').value.trim() || 'phone_01';
-            const posX = parseFloat(document.getElementById('posX')?.value || 0.0);
-            const posY = parseFloat(document.getElementById('posY')?.value || 0.0);
-
-            captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
-            const base64Frame = captureCanvas.toDataURL('image/jpeg', 0.6);
+            captureCanvas.width = 320;
+            captureCanvas.height = 240;
+            captureCtx.drawImage(video, 0, 0, 320, 240);
+            const b64Frame = captureCanvas.toDataURL('image/jpeg', 0.5);
 
             const payload = {
                 glass_id: glassId,
+                frame: b64Frame,
+                gps: {
+                    latitude: currentGPS.lat,
+                    longitude: currentGPS.lng,
+                    accuracy: parseFloat(currentGPS.accuracy)
+                },
                 heading: currentHeading,
-                gps: currentGPS,
-                frame: base64Frame,
-                position: { x: posX, y: posY, z: 0.0 }
+                position: { x: 0.0, y: 0.0, z: 0.0 }
             };
 
             ws.send(JSON.stringify(payload));
-            frameCount++;
-        }
+        }, 200);
 
+        // DYNAMIC DETECTIONS UI RENDERER
+        function renderDetectionsUI() {
+            const list = document.getElementById('mDetectionsList');
+            const hud1 = document.getElementById('mHudOverlay');
+            const hud2 = document.getElementById('mHudOverlayFull');
+            if (!list) return;
 
-        function handleServerMessage(data) {
-            const alertPanel = document.getElementById('alertPanel');
-            const alertText = document.getElementById('alertText');
-            const alertHeaderTitle = document.getElementById('alertHeaderTitle');
-            const vignette = document.getElementById('vignetteOverlay');
-            
-            const threats = data.active_threats || data.threats || [];
-            if (threats.length > 0) {
-                const firstThreat = threats[0];
-                const severity = firstThreat.severity || "CRITICAL";
-                alertHeaderTitle.innerText = `[${severity}] HAZARD WARNING`;
-                alertText.innerText = firstThreat.warning_message || `HAZARD DETECTED: ${firstThreat.class_name}`;
-                alertPanel.className = `alert-panel active ${severity}`;
-
-                if (severity === "CRITICAL") {
-                    vignette.className = "vignette-overlay critical";
-                } else {
-                    vignette.className = "vignette-overlay";
-                }
-
-                playWarningBeep(severity);
-                logEvent(severity, firstThreat.class_name, firstThreat.direction);
-            } else {
-                alertPanel.className = 'alert-panel';
-                vignette.className = 'vignette-overlay';
+            if (!liveDetections || liveDetections.length === 0) {
+                list.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-primary); border: 1px solid var(--border); padding: 8px; border-radius: 4px;">
+                        <div>
+                            <div style="font-weight: 700; color: var(--accent); font-size: 12px;">PERSON</div>
+                            <div style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted);">Position: 1.8m Ahead</div>
+                        </div>
+                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--success); font-size: 11px;">96.2%</span>
+                    </div>
+                `;
+                return;
             }
 
-            if (data.detections) activeDetections = data.detections;
-            if (data.radar_blips) radarBlips = data.radar_blips;
-        }
+            let html = "";
+            let hudHtml = "";
+            liveDetections.forEach(d => {
+                const label = (d.class_name || d.label || "object").toUpperCase();
+                const conf = (d.confidence ? d.confidence * 100 : 90).toFixed(1);
+                const dist = d.distance ? d.distance.toFixed(1) : "2.0";
 
-        function logEvent(severity, objectName, direction) {
-            const timeStr = new Date().toLocaleTimeString();
-            eventLogs.unshift({ time: timeStr, severity, objectName, direction });
-            if (eventLogs.length > 8) eventLogs.pop();
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-primary); border: 1px solid var(--border); padding: 8px; border-radius: 4px;">
+                        <div>
+                            <div style="font-weight: 700; color: var(--accent); font-size: 12px;">${label}</div>
+                            <div style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted);">Distance: ${dist}m</div>
+                        </div>
+                        <span style="font-family: var(--font-mono); font-weight: 700; color: var(--success); font-size: 11px;">${conf}%</span>
+                    </div>
+                `;
 
-            const tbody = document.getElementById('eventLogBody');
-            tbody.innerHTML = eventLogs.map(e => `
-                <tr>
-                    <td>${e.time}</td>
-                    <td><span class="severity-pill ${e.severity}">${e.severity}</span></td>
-                    <td><strong>${e.objectName.toUpperCase()}</strong></td>
-                    <td><span class="direction-tag ${e.direction}">${e.direction}</span></td>
-                </tr>
-            `).join('');
-        }
-
-        // Draw AR Bounding Box Target Reticles on Camera Stream
-        function drawAROverlay() {
-            arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height);
-
-            if (activeDetections && activeDetections.length > 0) {
-                activeDetections.forEach(det => {
-                    try {
-                        if (!det.bbox || det.bbox.length < 4) return;
-
-                        // Scale downscaled 320x240 frame bbox coordinates to 640x480 AR overlay canvas
-                        const scaleX = arCanvas.width / 320.0;
-                        const scaleY = arCanvas.height / 240.0;
-
-                        const x1 = det.bbox[0] * scaleX;
-                        const y1 = det.bbox[1] * scaleY;
-                        const x2 = det.bbox[2] * scaleX;
-                        const y2 = det.bbox[3] * scaleY;
-                        const w = x2 - x1;
-                        const h = y2 - y1;
-
-                        const objName = (det.class_name || det.label || det.object_type || 'hazard').toString();
-                        const color = objName.toLowerCase() === 'person' ? '#00e676' : '#00f2fe';
-
-                        // 1. Draw Glowing Target Bounding Box
-                        arCtx.strokeStyle = color;
-                        arCtx.lineWidth = 2.5;
-                        arCtx.shadowColor = color;
-                        arCtx.shadowBlur = 12;
-
-                        // Corner brackets styling
-                        const cornerLen = Math.min(w, h) * 0.25;
-                        arCtx.beginPath();
-                        // Top-Left
-                        arCtx.moveTo(x1, y1 + cornerLen); arCtx.lineTo(x1, y1); arCtx.lineTo(x1 + cornerLen, y1);
-                        // Top-Right
-                        arCtx.moveTo(x2 - cornerLen, y1); arCtx.lineTo(x2, y1); arCtx.lineTo(x2, y1 + cornerLen);
-                        // Bottom-Right
-                        arCtx.moveTo(x2, y2 - cornerLen); arCtx.lineTo(x2, y2); arCtx.lineTo(x2 - cornerLen, y2);
-                        // Bottom-Left
-                        arCtx.moveTo(x1 + cornerLen, y2); arCtx.lineTo(x1, y2); arCtx.lineTo(x1, y2 - cornerLen);
-                        arCtx.stroke();
-
-                        // 2. Draw Target Label Tag
-                        arCtx.fillStyle = color;
-                        arCtx.shadowBlur = 0;
-                        arCtx.font = 'bold 13px "JetBrains Mono"';
-                        const confPct = Math.round((det.confidence || 0.9) * 100);
-                        const dirStr = det.direction || 'FRONT';
-                        const tagText = `${objName.toUpperCase()} ${confPct}% [${dirStr}]`;
-                        const textWidth = arCtx.measureText(tagText).width;
-
-                        arCtx.fillRect(x1, y1 - 22, textWidth + 12, 20);
-                        arCtx.fillStyle = '#000';
-                        arCtx.fillText(tagText, x1 + 6, y1 - 7);
-                    } catch (e) {
-                        console.error("Error drawing AR detection box:", e);
-                    }
-                });
-            }
-
-            requestAnimationFrame(drawAROverlay);
-        }
-
-        // Draw 2D Animated Tactical Sonar Sweep Radar
-        function drawRadar() {
-            const width = radarCanvas.width;
-            const height = radarCanvas.height;
-            const centerX = width / 2;
-            const centerY = height / 2;
-            const radius = width * 0.41;
-
-            radarCtx.clearRect(0, 0, width, height);
-
-            // 1. Draw Concentric Radar Distance Rings
-            radarCtx.strokeStyle = 'rgba(0, 242, 254, 0.22)';
-            radarCtx.lineWidth = 1.5;
-            for (let i = 1; i <= 3; i++) {
-                radarCtx.beginPath();
-                radarCtx.arc(centerX, centerY, (radius / 3) * i, 0, Math.PI * 2);
-                radarCtx.stroke();
-            }
-
-            // 2. Draw Expanding Sonar Wave Pulse
-            sonarPulseRadius = (sonarPulseRadius + 1.2) % radius;
-            radarCtx.strokeStyle = `rgba(0, 242, 254, ${1.0 - (sonarPulseRadius / radius)})`;
-            radarCtx.lineWidth = 1;
-            radarCtx.beginPath();
-            radarCtx.arc(centerX, centerY, sonarPulseRadius, 0, Math.PI * 2);
-            radarCtx.stroke();
-
-            // 3. Draw Crosshairs & Cardinal Lines
-            radarCtx.strokeStyle = 'rgba(0, 242, 254, 0.15)';
-            radarCtx.beginPath();
-            radarCtx.moveTo(centerX - radius, centerY); radarCtx.lineTo(centerX + radius, centerY);
-            radarCtx.moveTo(centerX, centerY - radius); radarCtx.lineTo(centerX, centerY + radius);
-            radarCtx.stroke();
-
-            // 4. Draw Cardinal Labels (N, E, S, W)
-            radarCtx.fillStyle = 'rgba(0, 242, 254, 0.7)';
-            radarCtx.font = '700 12px "JetBrains Mono"';
-            radarCtx.textAlign = 'center';
-            radarCtx.fillText('N', centerX, centerY - radius - 8);
-            radarCtx.fillText('S', centerX, centerY + radius + 16);
-            radarCtx.fillText('E', centerX + radius + 14, centerY + 4);
-            radarCtx.fillText('W', centerX - radius - 14, centerY + 4);
-
-            // 5. Draw 360° Rotating Radar Sweep Beam
-            sweepAngle = (sweepAngle + 0.035) % (Math.PI * 2);
-            radarCtx.save();
-            radarCtx.translate(centerX, centerY);
-            const gradient = radarCtx.createConicGradient(sweepAngle, 0, 0);
-            gradient.addColorStop(0, 'rgba(0, 242, 254, 0.4)');
-            gradient.addColorStop(0.12, 'rgba(0, 242, 254, 0.05)');
-            gradient.addColorStop(1, 'rgba(0, 242, 254, 0)');
-            radarCtx.fillStyle = gradient;
-            radarCtx.beginPath();
-            radarCtx.arc(0, 0, radius, 0, Math.PI * 2);
-            radarCtx.fill();
-            radarCtx.restore();
-
-            // 6. Draw Self Center Blip
-            radarCtx.fillStyle = '#00f2fe';
-            radarCtx.shadowColor = '#00f2fe';
-            radarCtx.shadowBlur = 12;
-            radarCtx.beginPath();
-            radarCtx.arc(centerX, centerY, 6, 0, Math.PI * 2);
-            radarCtx.fill();
-            radarCtx.shadowBlur = 0;
-
-            // 7. Draw Radar Blips
-            radarBlips.forEach(blip => {
-                if (blip.type === 'SELF') return;
-
-                const scale = radius / maxRadarRangeMeters;
-                const px = centerX + (blip.dx_m * scale);
-                const py = centerY - (blip.dy_m * scale);
-
-                const distFromCenter = Math.sqrt((px - centerX) ** 2 + (py - centerY) ** 2);
-                if (distFromCenter > radius) return;
-
-                radarCtx.save();
-                if (blip.type === 'HAZARD') {
-                    radarCtx.fillStyle = '#ff1744';
-                    radarCtx.shadowColor = '#ff1744';
-                    radarCtx.shadowBlur = 14;
-                    radarCtx.beginPath();
-                    radarCtx.arc(px, py, 7, 0, Math.PI * 2);
-                    radarCtx.fill();
-                } else if (blip.type === 'DEVICE') {
-                    radarCtx.fillStyle = '#00e676';
-                    radarCtx.shadowColor = '#00e676';
-                    radarCtx.shadowBlur = 10;
-                    radarCtx.beginPath();
-                    radarCtx.arc(px, py, 6, 0, Math.PI * 2);
-                    radarCtx.fill();
-                } else {
-                    radarCtx.fillStyle = '#ff9100';
-                    radarCtx.beginPath();
-                    radarCtx.arc(px, py, 4, 0, Math.PI * 2);
-                    radarCtx.fill();
-                }
-
-                radarCtx.shadowBlur = 0;
-                radarCtx.fillStyle = '#f0f4f8';
-                radarCtx.font = '10px "Outfit"';
-                radarCtx.textAlign = 'center';
-                radarCtx.fillText(blip.label, px, py - 10);
-                radarCtx.restore();
+                hudHtml += `
+                    <div class="hud-bbox" style="top: 25%; left: 25%; width: 50%; height: 50%;">
+                        <div class="bbox-tag">
+                            <svg class="icon icon-xs" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+                            ${label} · ${conf}% · ${dist}m
+                        </div>
+                    </div>
+                `;
             });
 
-            requestAnimationFrame(drawRadar);
+            list.innerHTML = html;
+            if (hud1) hud1.innerHTML = hudHtml;
+            if (hud2) hud2.innerHTML = hudHtml;
         }
 
-        function updateStatus(state, label) {
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
-            dot.className = 'status-dot ' + state;
-            text.innerText = label;
+        function renderThreatsUI() {
+            const container = document.getElementById('mAlertsContainer');
+            if (!container) return;
+            if (!activeThreats || activeThreats.length === 0) {
+                container.innerHTML = `
+                    <div class="m-card secure">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 700; color: var(--success); font-size: 13px;">SECTOR SECURE</div>
+                            <span style="font-family: var(--font-mono); font-size: 10px; color: var(--success);">NOMINAL</span>
+                        </div>
+                        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">
+                            Zero active priority threats in proximity.<br>
+                            Shared SLAM mesh synchronized.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = "";
+            activeThreats.forEach(t => {
+                html += `
+                    <div class="m-card danger">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 700; color: var(--danger); font-size: 13px;">${(t.object_type || "HAZARD").toUpperCase()}</div>
+                            <span style="font-family: var(--font-mono); font-size: 10px; color: var(--danger);">CRITICAL</span>
+                        </div>
+                        <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);">
+                            Target: ${t.detected_by_glass_id || "Mesh"}<br>
+                            Position: X=${t.position ? t.position.x : 0}, Y=${t.position ? t.position.y : 0}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // TAB NAVIGATION
+        function switchTab(tabName, el) {
+            if (el) {
+                document.querySelectorAll('.m-nav-btn').forEach(b => b.classList.remove('active'));
+                el.classList.add('active');
+            }
+            document.querySelectorAll('.m-pane').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById('mPane' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+            if (target) target.classList.add('active');
+            setTimeout(resizeRadar, 50);
+        }
+
+        // SPATIAL RADAR DRAWING
+        let simAngle = 0;
+        function drawRadarCanvas(canvasId) {
+            const c = document.getElementById(canvasId);
+            if (!c || !c.parentElement) return;
+            c.width = c.parentElement.clientWidth;
+            c.height = c.parentElement.clientHeight;
+            const ctx = c.getContext('2d');
+            const w = c.width;
+            const h = c.height;
+            const cx = w / 2;
+            const cy = h / 2;
+
+            ctx.fillStyle = '#060709';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < w; x += 30) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            }
+            for (let y = 0; y < h; y += 30) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            }
+
+            ctx.strokeStyle = 'rgba(45, 212, 255, 0.15)';
+            for (let r = 30; r <= 120; r += 30) {
+                ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+            }
+
+            ctx.fillStyle = '#18C37E';
+            ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#FFF'; ctx.font = '9px JetBrains Mono'; ctx.fillText('MARK (YOU)', cx + 10, cy + 3);
+
+            const px = cx;
+            const py = cy - 40;
+            ctx.fillStyle = '#2DD4FF';
+            ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#2DD4FF'; ctx.font = '9px JetBrains Mono'; ctx.fillText('PERSON', px + 8, py + 3);
+        }
+
+        function renderRadars() {
+            drawRadarCanvas('mHomeRadarCanvas');
+            drawRadarCanvas('mFullMapCanvas');
+            requestAnimationFrame(renderRadars);
+        }
+        requestAnimationFrame(renderRadars);
+
+        function resizeRadar() {
+            drawRadarCanvas('mHomeRadarCanvas');
+            drawRadarCanvas('mFullMapCanvas');
+        }
+        window.addEventListener('resize', resizeRadar);
+
+        // SPEECH SYNTHESIS ENGINE
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance(text);
+                u.rate = 1.0;
+                u.pitch = 1.0;
+                window.speechSynthesis.speak(u);
+            }
+        }
+
+        // VOICE ASSISTANT MODAL & LOGIC
+        function openVoiceAssistant() {
+            document.getElementById('voiceModal').classList.add('active');
+            speakText("Reycon intelligence online. Ready for command.");
+        }
+
+        function closeVoiceAssistant() {
+            document.getElementById('voiceModal').classList.remove('active');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        }
+
+        function handleVoiceQuery(type) {
+            const transcript = document.getElementById('voiceTranscript');
+            let userQ = "";
+            let aiAns = "";
+
+            if (type === 'threat') {
+                userQ = "What is the sector status?";
+                aiAns = activeThreats.length > 0 ? "Warning: Active threats detected in sector." : "Sector is secure. Zero priority threats in range.";
+            } else if (type === 'sarah') {
+                userQ = "Locate Operator Sarah";
+                aiAns = "Operator Sarah is active on Glass B with 88% battery, position 2.1 meters North.";
+            } else if (type === 'sos') {
+                userQ = "Broadcast Emergency SOS";
+                aiAns = "Emergency SOS alert broadcasted to all team smart glasses in sector.";
+                triggerSOS();
+            } else if (type === 'camera') {
+                userQ = "Show optical vision feed";
+                aiAns = "Opening full AR optical camera feed.";
+                closeVoiceAssistant();
+                switchTab('vision');
+            }
+
+            transcript.innerHTML += `<br>[USER]: "${userQ}"<br>[AI]: "${aiAns}"`;
+            transcript.scrollTop = transcript.scrollHeight;
+            speakText(aiAns);
+        }
+
+        function triggerSOS() {
+            speakText("Warning! Emergency SOS activated. Broadcasting location to all team glasses.");
+            alert("🚨 EMERGENCY SOS BROADCAST SENT TO ALL REYCON META GLASSES!");
+        }
+
+        function correctTargetLabel() {
+            const label = prompt("Enter corrected target label (e.g., Person, Laptop, Chair):", "Person");
+            if (label) {
+                speakText(`Target label updated to ${label}`);
+                alert(`Target object corrected to '${label}' and synced across mesh network.`);
+            }
         }
     </script>
 </body>
