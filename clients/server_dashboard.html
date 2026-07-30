@@ -855,18 +855,9 @@
 
                             <div class="panel-block">
                                 <div class="panel-title">LIVE TRACKED ENTITIES</div>
-                                <div style="display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 11px;">
-                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border);">
-                                        <span>GLASS_A (Operator Mark)</span>
-                                        <span style="color: var(--success);">ONLINE</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid var(--border);">
-                                        <span>GLASS_B (Operator Sarah)</span>
-                                        <span style="color: var(--success);">ONLINE</span>
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; padding: 4px 0;">
-                                        <span>PERSON (Detected 1.8m)</span>
-                                        <span style="color: var(--accent);">TRACKING</span>
+                                <div id="liveTrackedEntitiesList" style="display: flex; flex-direction: column; gap: 6px; font-family: var(--font-mono); font-size: 11px;">
+                                    <div style="padding: 8px 0; color: var(--text-muted); text-align: center;">
+                                        Scanning for Connected Devices...
                                     </div>
                                 </div>
                             </div>
@@ -1215,7 +1206,12 @@
         }
         initWebcam();
 
-        // WEBSOCKET CONNECTION STATUS MONITOR
+        // LIVE CONNECTED DEVICES & WORLD STATE MANAGER
+        let liveConnectedGlasses = {};
+        let liveRadarBlips = [];
+        let liveActiveThreats = [];
+
+        // WEBSOCKET CONNECTION MONITOR
         let ws = null;
         function initWebSocket() {
             const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -1226,6 +1222,23 @@
                 ws.onopen = () => {
                     if (badgeText) badgeText.innerText = "WEBSOCKET ONLINE";
                 };
+                ws.onmessage = (evt) => {
+                    try {
+                        const data = JSON.parse(evt.data);
+                        if (data.radar_blips) liveRadarBlips = data.radar_blips;
+                        if (data.glass_id) {
+                            liveConnectedGlasses[data.glass_id] = {
+                                id: data.glass_id,
+                                position: data.position || { x: 0, y: 0, z: 0 },
+                                heading: data.heading || 0,
+                                connected: true,
+                                timestamp: Date.now()
+                            };
+                            updateEntitiesSidebar();
+                            updateHeaderStats();
+                        }
+                    } catch (e) {}
+                };
                 ws.onclose = () => {
                     if (badgeText) badgeText.innerText = "RECONNECTING...";
                     setTimeout(initWebSocket, 3000);
@@ -1233,6 +1246,72 @@
             } catch (e) {}
         }
         initWebSocket();
+
+        // REST WORLD STATE POLLING FALLBACK (1 FPS)
+        async function fetchServerWorldState() {
+            try {
+                const res = await fetch('/api/shared/world_state');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.glasses) {
+                        liveConnectedGlasses = data.glasses;
+                        updateEntitiesSidebar();
+                        updateHeaderStats();
+                    }
+                    if (data.threats) {
+                        liveActiveThreats = data.threats;
+                    }
+                }
+            } catch(e) {}
+        }
+        setInterval(fetchServerWorldState, 1500);
+        fetchServerWorldState();
+
+        function updateHeaderStats() {
+            const count = Object.keys(liveConnectedGlasses).length;
+            const el = document.getElementById('statConnectedCount');
+            if (el) el.innerText = `${count} ONLINE`;
+        }
+
+        function updateEntitiesSidebar() {
+            const container = document.getElementById('liveTrackedEntitiesList');
+            if (!container) return;
+            const glasses = Object.values(liveConnectedGlasses);
+            if (glasses.length === 0) {
+                container.innerHTML = `
+                    <div style="padding: 12px; color: var(--text-dim); text-align: center; font-family: var(--font-mono); font-size: 11px;">
+                        NO DEVICES CONNECTED<br>
+                        <span style="font-size: 9px; color: var(--text-muted);">Waiting for Mobile Companion...</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = "";
+            glasses.forEach(g => {
+                const devId = (g.id || "PHONE_CLIENT").toUpperCase();
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--border);">
+                        <span>📱 ${devId}</span>
+                        <span style="color: var(--success); font-weight: 700;">ONLINE</span>
+                    </div>
+                `;
+            });
+
+            if (liveRadarBlips && liveRadarBlips.length > 0) {
+                liveRadarBlips.forEach(b => {
+                    const lbl = (b.label || b.object_type || "OBJECT").toUpperCase();
+                    const dist = b.distance ? `${b.distance.toFixed(1)}m` : 'NEARBY';
+                    html += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0;">
+                            <span>🎯 ${lbl} (${dist})</span>
+                            <span style="color: var(--accent);">TRACKING</span>
+                        </div>
+                    `;
+                });
+            }
+            container.innerHTML = html;
+        }
 
         // CANVAS ENGINE
         const canvas = document.getElementById('mainSlamCanvas');
@@ -1296,11 +1375,50 @@
                     ctx.beginPath(); ctx.arc(cx, cy, 220, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
                 }
 
-                const gAx = cx - 60; const gAy = cy + 40;
-                drawOperatorMarker(ctx, gAx, gAy, 'GLASS_A', '#18C37E', simAngle);
+                const glasses = Object.values(liveConnectedGlasses);
+                if (glasses.length === 0) {
+                    ctx.save();
+                    ctx.fillStyle = 'rgba(45, 212, 255, 0.06)';
+                    ctx.beginPath(); ctx.arc(cx, cy, 24 + Math.sin(simAngle * 3) * 6, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#2DD4FF';
+                    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    ctx.font = '10px JetBrains Mono';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('SERVER LISTENING — WAITING FOR CONNECTED PHONE / GLASSES', cx, cy + 40);
+                    ctx.restore();
+                } else {
+                    glasses.forEach((g, idx) => {
+                        const pos = g.position || {};
+                        let px = typeof pos.x === 'number' ? pos.x : 0;
+                        let py = typeof pos.y === 'number' ? pos.y : 0;
 
-                const gBx = cx + 80; const gBy = cy - 50;
-                drawOperatorMarker(ctx, gBx, gBy, 'GLASS_B', '#18C37E', simAngle + 1);
+                        let screenX = cx + (px * 35);
+                        let screenY = cy - (py * 35);
+
+                        if (px === 0 && py === 0 && glasses.length > 1) {
+                            const angle = (idx / glasses.length) * Math.PI * 2;
+                            screenX = cx + Math.cos(angle) * 70;
+                            screenY = cy + Math.sin(angle) * 70;
+                        }
+
+                        const headingRad = ((g.heading || 0) * Math.PI) / 180.0;
+                        const devName = (g.id || 'PHONE').toUpperCase();
+                        drawOperatorMarker(ctx, screenX, screenY, devName, '#18C37E', headingRad + simAngle * 0.1);
+                    });
+                }
+
+                if (liveRadarBlips && liveRadarBlips.length > 0) {
+                    liveRadarBlips.forEach(b => {
+                        const bx = cx + (b.x || 0) * 35;
+                        const by = cy - (b.y || 0) * 35;
+                        ctx.fillStyle = '#2DD4FF';
+                        ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = '9px JetBrains Mono';
+                        ctx.fillText((b.label || 'OBJECT').toUpperCase(), bx + 8, by + 3);
+                    });
+                }
             }
 
             // Draw Mobile Widget Radar
@@ -1322,11 +1440,6 @@
 
                 mCtx.fillStyle = '#18C37E';
                 mCtx.beginPath(); mCtx.arc(mcx, mcy, 5, 0, Math.PI * 2); mCtx.fill();
-
-                const px = mcx;
-                const py = mcy - 30;
-                mCtx.fillStyle = '#2DD4FF';
-                mCtx.beginPath(); mCtx.arc(px, py, 4, 0, Math.PI * 2); mCtx.fill();
             }
 
             requestAnimationFrame(renderSlamMap);

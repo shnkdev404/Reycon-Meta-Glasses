@@ -1,13 +1,7 @@
-"""
-Phase 3: Object Detection Vision Layer Interface & Wrappers.
-
-Abstract contract & wrapper classes for deep learning object detectors.
-TODO: Connect real neural network models (Ultralytics YOLO11, YOLO12, or RT-DETR)
-in concrete implementations.
-"""
 from abc import ABC, abstractmethod
 from typing import List, Any
 from app.models.object import Detection2D, BoundingBox2D
+from app.services.detector import apply_soft_nms, model_manager
 
 
 class BaseObjectDetector(ABC):
@@ -23,32 +17,33 @@ class YOLOWrapper(BaseObjectDetector):
     """
     Wrapper for Ultralytics YOLO models (YOLOv8, YOLO11, YOLO12, RT-DETR).
     Provides concrete fallback/simulated detection output when AI weights are unmounted.
+    Supports ModelManager singleton caching, Soft-NMS post-processing, and frame skipping.
     """
 
-    def __init__(self, model_name: str = "yolo11n.pt", confidence_threshold: float = 0.5):
+    def __init__(self, model_name: str = "yolo11n.pt", confidence_threshold: float = 0.5, frame_skip: int = 2):
         self.model_name = model_name
         self.confidence_threshold = confidence_threshold
-        self._model = None
-        self._initialize_model()
+        self.frame_skip = frame_skip
+        self._frame_count = 0
+        self._last_detections: List[Detection2D] = []
+        self._model = model_manager.get_model(model_name)
 
-    def _initialize_model(self):
-        """Attempts to load PyTorch / Ultralytics model weights if available."""
-        try:
-            from ultralytics import YOLO
-            self._model = YOLO(self.model_name)
-        except Exception:
-            # Fallback to simulated detector mode when ultralytics is not installed or weights unavailable
-            self._model = None
-
-    def detect(self, frame: Any) -> List[Detection2D]:
+    def detect(self, frame: Any, force_inference: bool = False) -> List[Detection2D]:
         """
         Run inference on the incoming camera frame.
         Supports raw image objects, numpy arrays, frame byte dictionaries, or fallback simulation.
+        Applies frame skipping and Soft-NMS post-processing.
         """
+        # Frame skipping optimization
+        self._frame_count += 1
+        if not force_inference and self.frame_skip > 1 and (self._frame_count % self.frame_skip != 1) and self._last_detections:
+            return self._last_detections
+
+        raw_detections: List[Detection2D] = []
+
         if self._model is not None:
             try:
                 results = self._model(frame, conf=self.confidence_threshold)
-                detections: List[Detection2D] = []
                 for result in results:
                     boxes = result.boxes
                     for box in boxes:
@@ -56,6 +51,9 @@ class YOLOWrapper(BaseObjectDetector):
                         conf = float(box.conf[0])
                         cls_id = int(box.cls[0])
                         label = self._model.names.get(cls_id, f"class_{cls_id}")
+
+                        if conf < self.confidence_threshold:
+                            continue
 
                         # Estimate distance based on bounding box pixel height
                         box_h = max(1.0, xyxy[3] - xyxy[1])
@@ -65,7 +63,7 @@ class YOLOWrapper(BaseObjectDetector):
                         box_cx = (xyxy[0] + xyxy[2]) / 2.0
                         bearing_est = round((box_cx - 960.0) / 960.0 * 45.0, 1)
 
-                        detections.append(
+                        raw_detections.append(
                             Detection2D(
                                 label=label,
                                 confidence=round(conf, 2),
@@ -74,8 +72,15 @@ class YOLOWrapper(BaseObjectDetector):
                                 bearing=bearing_est
                             )
                         )
-                if detections:
-                    return detections
+                if raw_detections:
+                    filtered = apply_soft_nms(
+                        raw_detections,
+                        iou_threshold=0.5,
+                        sigma=0.5,
+                        confidence_threshold=self.confidence_threshold
+                    )
+                    self._last_detections = filtered
+                    return filtered
             except Exception:
                 pass
 
@@ -89,9 +94,16 @@ class YOLOWrapper(BaseObjectDetector):
                 elif isinstance(d, Detection2D):
                     parsed.append(d)
             if parsed:
-                return parsed
+                filtered = apply_soft_nms(
+                    parsed,
+                    iou_threshold=0.5,
+                    sigma=0.5,
+                    confidence_threshold=self.confidence_threshold
+                )
+                self._last_detections = filtered
+                return filtered
 
-        return [
+        fallback_dets = [
             Detection2D(
                 label="vehicle",
                 confidence=0.92,
@@ -107,4 +119,28 @@ class YOLOWrapper(BaseObjectDetector):
                 bearing=10.0
             )
         ]
+
+        filtered = apply_soft_nms(
+            fallback_dets,
+            iou_threshold=0.5,
+            sigma=0.5,
+            confidence_threshold=self.confidence_threshold
+        )
+        self._last_detections = filtered
+        return filtered
+
+    def detect_3d(self, frame: Any, depth_map: Any = None) -> List[Any]:
+        """
+        Run 2D object detection and lift results into 3D bounding cuboids with (X, Y, Z) and 8 corner vertices.
+        """
+        from app.vision.object_3d import lift_2d_to_3d
+        dets_2d = self.detect(frame)
+        boxes_3d = []
+        for d in dets_2d:
+            bbox = [d.bbox.xmin, d.bbox.ymin, d.bbox.xmax, d.bbox.ymax]
+            b3d = lift_2d_to_3d(bbox, depth_map=depth_map, label=d.label, confidence=d.confidence)
+            boxes_3d.append(b3d)
+        return boxes_3d
+
+
 

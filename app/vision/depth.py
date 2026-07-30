@@ -52,22 +52,31 @@ class DepthEstimatorWrapper(BaseDepthEstimator):
 
     def estimate_depth(self, frame: Any, bbox: BoundingBox2D, label: str = "person") -> float:
         """
-        Compute metric depth in meters from frame depth map or pinhole camera geometry.
+        Compute metric depth in meters from RGB-D depth map buffer or pinhole camera geometry.
         """
-        # Step 1: If frame contains a depth map buffer (from Phase 2 Depth Sensor)
+        # Step 1: If frame contains an RGB-D depth map buffer (2D numpy array)
+        depth_map = None
         if isinstance(frame, dict) and "depth_map" in frame:
             depth_map = frame["depth_map"]
-            if hasattr(depth_map, "__getitem__") and bbox:
-                cx = int((bbox.xmin + bbox.xmax) / 2.0)
-                cy = int((bbox.ymin + bbox.ymax) / 2.0)
-                try:
-                    depth_val = float(depth_map[cy][cx])
-                    if depth_val > 0.0:
-                        return round(depth_val, 2)
-                except Exception:
-                    pass
+        elif hasattr(frame, "shape") and len(frame.shape) == 2:
+            depth_map = frame
 
-        # Step 2: Monocular pinhole geometry fallback: depth = (f * H_real) / h_pixel
+        if depth_map is not None and hasattr(depth_map, "__getitem__") and bbox:
+            try:
+                import numpy as np
+                x1, y1, x2, y2 = int(bbox.xmin), int(bbox.ymin), int(bbox.xmax), int(bbox.ymax)
+                h, w = depth_map.shape[:2]
+                x1, x2 = max(0, min(w - 1, x1)), max(0, min(w - 1, x2))
+                y1, y2 = max(0, min(h - 1, y1)), max(0, min(h - 1, y2))
+                if x2 > x1 and y2 > y1:
+                    roi = depth_map[y1:y2, x1:x2]
+                    valid = roi[roi > 0.1]
+                    if valid.size > 0:
+                        return round(float(np.median(valid)), 2)
+            except Exception:
+                pass
+
+        # Step 2: Monocular calibrated pinhole geometry fallback: depth = (f * H_real) / h_pixel
         if bbox:
             box_h = max(1.0, bbox.ymax - bbox.ymin)
             ref_h = self.REFERENCE_HEIGHTS.get(label.lower(), 1.5)

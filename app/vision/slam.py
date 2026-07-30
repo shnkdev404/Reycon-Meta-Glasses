@@ -1,18 +1,17 @@
 """
-Phase 4: Pose Estimation & Visual SLAM Interfaces.
+Phase 4 & Phase 14: Pose Estimation & Visual SLAM Interfaces.
 
-Abstract contracts & wrappers for Visual Odometry, VIO, and SLAM systems.
-TODO: Connect ORB-SLAM3, OpenVSLAM, RTABMAP, or Meta Pose API.
+Abstract contracts & wrappers for Visual Odometry, VIO, and Real-Time SLAM systems.
+Integrates ORBSLAMWrapper (ORB-SLAM3 Monocular + IMU) engine.
 """
-from abc import ABC, abstractmethod
-from typing import Any
-from app.models.glass import GlassPose
-
-
 import math
+import logging
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, List
 from app.models.glass import GlassPose, GlassSensors
+from app.slam.orbslam3_wrapper import ORBSLAMWrapper, ORBSLAM3Wrapper
+
+logger = logging.getLogger("SLAMManager")
 
 
 class BaseSLAM(ABC):
@@ -31,14 +30,22 @@ class BaseSLAM(ABC):
 
 class SLAMManager(BaseSLAM):
     """
-    Visual Inertial Odometry (VIO) & SLAM Manager wrapper compatible with ORB-SLAM3,
-    OpenVSLAM, RTABMAP, and Meta Pose API.
-    Fuses IMU kinematic dead-reckoning with visual frame feature translation updates.
+    Visual Inertial Odometry (VIO) & SLAM Manager wrapper integrating ORBSLAMWrapper
+    (ORB-SLAM3 Monocular + IMU). Real-time 6DoF global coordinate frame tracking,
+    loop closure detection, relocalization, and map persistence.
     """
 
-    def __init__(self, backend: str = "MetaPoseAPI", init_pose: Optional[GlassPose] = None):
+    def __init__(
+        self,
+        backend: str = "ORBSLAM3",
+        vocab_path: str = "ORBvoc.txt",
+        config_path: str = "camera.yaml",
+        init_pose: Optional[GlassPose] = None
+    ):
         self.backend = backend
-        self._slam_engine = None
+        self.vocab_path = vocab_path
+        self.config_path = config_path
+        self._slam_engine: Optional[ORBSLAM3Wrapper] = None
         
         # 6DoF State variables
         self.x = init_pose.x if init_pose else 0.0
@@ -56,11 +63,16 @@ class SLAMManager(BaseSLAM):
         self._initialize_backend()
 
     def _initialize_backend(self):
-        """Attempts to bind native SLAM C++ engine or Meta Wearable 6DoF Pose API if installed."""
+        """Initializes ORBSLAMWrapper (ORB-SLAM3 Monocular+IMU engine)."""
         try:
-            # Placeholder for C++ / PyBind11 bindings to ORB-SLAM3 or Meta SDK
-            self._slam_engine = None
-        except Exception:
+            self._slam_engine = ORBSLAMWrapper(
+                vocab_path=self.vocab_path,
+                config_path=self.config_path,
+                glass_id="meta_glass_slam"
+            )
+            logger.info("✅ SLAMManager bound successfully to ORBSLAMWrapper backend.")
+        except Exception as e:
+            logger.warning(f"Error binding SLAM backend: {e}")
             self._slam_engine = None
 
     def track_pose(self, frame: Any = None, imu_data: Any = None, dt: float = 0.033) -> GlassPose:
@@ -71,18 +83,28 @@ class SLAMManager(BaseSLAM):
         if dt <= 0:
             dt = 0.033
 
-        # Step 1: Process Native SLAM engine output if bound
+        # Step 1: Process native ORBSLAMWrapper engine if bound
         if self._slam_engine is not None:
             try:
-                native_pose = self._slam_engine.process(frame, imu_data)
-                if isinstance(native_pose, GlassPose):
-                    self.x, self.y, self.z = native_pose.x, native_pose.y, native_pose.z
-                    self.heading, self.pitch, self.roll = native_pose.heading, native_pose.pitch, native_pose.roll
-                    return native_pose
-            except Exception:
-                pass
+                sensors = None
+                if isinstance(imu_data, GlassSensors):
+                    sensors = imu_data
+                elif isinstance(imu_data, dict):
+                    sensors = GlassSensors(
+                        accel_x=float(imu_data.get("accel_x", 0.0)),
+                        accel_y=float(imu_data.get("accel_y", 0.0)),
+                        accel_z=float(imu_data.get("accel_z", 9.81)),
+                        gyro_z=float(imu_data.get("gyro_z", 0.0))
+                    )
 
-        # Step 2: IMU Kinematic Dead Reckoning
+                slam_pose = self._slam_engine.track_mono(frame, sensors=sensors, dt=dt)
+                self.x, self.y, self.z = slam_pose.x, slam_pose.y, slam_pose.z
+                self.heading, self.pitch, self.roll = slam_pose.heading, slam_pose.pitch, slam_pose.roll
+                return slam_pose
+            except Exception as e:
+                logger.debug(f"SLAM engine tracking fallback: {e}")
+
+        # Step 2: IMU Kinematic Dead Reckoning fallback
         accel_x, accel_y, accel_z = 0.0, 0.0, 9.81
         gyro_z = 0.0
 
@@ -123,7 +145,6 @@ class SLAMManager(BaseSLAM):
         # Step 3: Visual Odometry Sensor Fusion (EKF Update step)
         if isinstance(frame, dict) and "visual_odometry" in frame:
             vo = frame["visual_odometry"]
-            # Blend visual translation update (alpha = 0.5)
             vo_dx = float(vo.get("dx", 0.0))
             vo_dy = float(vo.get("dy", 0.0))
             vo_dheading = float(vo.get("dheading", 0.0))
@@ -134,6 +155,18 @@ class SLAMManager(BaseSLAM):
 
         return self.get_pose()
 
+    def get_all_poses(self) -> List[GlassPose]:
+        """Return all historical 6DoF camera poses from SLAM engine."""
+        if self._slam_engine is not None:
+            return self._slam_engine.get_all_poses()
+        return [self.get_pose()]
+
+    def relocalize(self, frame: Any = None, timestamp: Optional[float] = None) -> Dict[str, Any]:
+        """Perform SLAM relocalization."""
+        if self._slam_engine is not None:
+            return self._slam_engine.relocalize(frame, timestamp=timestamp)
+        return {"success": False, "relocalized_pose": self.get_pose(), "relocalization_count": 0}
+
     def reset_origin(self, x: float = 0.0, y: float = 0.0, z: float = 1.65, heading: float = 0.0):
         """Reset spatial origin anchor coordinates and heading."""
         self.x = x
@@ -143,6 +176,8 @@ class SLAMManager(BaseSLAM):
         self.vx = 0.0
         self.vy = 0.0
         self.vz = 0.0
+        if self._slam_engine is not None:
+            self._slam_engine.current_pose = GlassPose(x=x, y=y, z=z, heading=heading)
 
     def get_pose(self) -> GlassPose:
         """Return the current estimated 6DoF pose."""
@@ -154,4 +189,3 @@ class SLAMManager(BaseSLAM):
             pitch=round(self.pitch, 1),
             roll=round(self.roll, 1)
         )
-

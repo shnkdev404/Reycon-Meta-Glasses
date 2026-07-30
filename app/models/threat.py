@@ -3,6 +3,7 @@ Pydantic data models for Threat Assessment and Directed Alerts.
 """
 from enum import Enum
 from datetime import datetime
+from typing import Dict
 from pydantic import BaseModel, Field
 
 
@@ -20,6 +21,8 @@ class ThreatType(str, Enum):
     FALLING_OBJECT = "FALLING_OBJECT"
     COLLISION_RISK = "COLLISION_RISK"
     BLIND_SPOT_OBSTACLE = "BLIND_SPOT_OBSTACLE"
+    BEHAVIOR_ANOMALY = "BEHAVIOR_ANOMALY"
+    PERSON_FROZEN = "PERSON_FROZEN"
 
 
 class ThreatAlert(BaseModel):
@@ -33,4 +36,6 @@ class ThreatAlert(BaseModel):
     distance: float = Field(..., description="Current distance to threat in meters")
     bearing: float = Field(..., description="Relative direction angle to threat in degrees")
     warning_message: str = Field(..., description="Human-readable warning text")
+    threat_score: float = Field(default=0.0, description="Multi-factor weighted threat score (0.0 to 1.0)")
+    score_components: Dict[str, float] = Field(default_factory=dict, description="Multi-factor risk score component breakdown")
     timestamp: datetime = Field(default_factory=datetime.utcnow)

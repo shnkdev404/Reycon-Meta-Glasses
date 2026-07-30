@@ -344,17 +344,19 @@
 </head>
 <body>
 
-    <!-- APP HEADER WITH PROMINENT CONNECTION STATUS BADGE -->
+    <!-- APP HEADER WITH PROMINENT CONNECTION STATUS BADGE & CONTROLS -->
     <header class="m-header">
         <div class="m-brand">
             <svg class="icon icon-sm" viewBox="0 0 24 24" style="color: var(--accent);"><path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/></svg>
             REYCON COMPANION
         </div>
 
-        <!-- LIVE WEBSOCKET CONNECTION BADGE -->
-        <div class="sys-badge disconnected" id="mConnStatusBadge">
-            <span class="dot-indicator"></span>
-            <span id="mConnStatusText">CONNECTING...</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="btnConnToggleHeader" class="btn-action" style="padding: 2px 8px; font-size: 10px;" onclick="toggleConnection()">DISCONNECT</button>
+            <div class="sys-badge disconnected" id="mConnStatusBadge">
+                <span class="dot-indicator"></span>
+                <span id="mConnStatusText">CONNECTING...</span>
+            </div>
         </div>
     </header>
 
@@ -367,10 +369,11 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <span style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted);">TACTICAL OPERATOR</span>
-                    <h3 style="font-size: 15px; font-weight: 700;">OPERATOR MARK</h3>
+                    <h3 style="font-size: 15px; font-weight: 700;" id="mOperatorTitle">DEVICE USER</h3>
                 </div>
                 <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); text-align: right;">
-                    DEVICE ID: <span style="color: var(--accent); font-weight: 700;" id="mDeviceIdText">PHONE_01</span><br>
+                    DEVICE ID: <span style="color: var(--accent); font-weight: 700;" id="mDeviceIdText">PHONE_01</span>
+                    <button onclick="editDeviceNameInline()" style="background:none; border:none; color:var(--accent); cursor:pointer; font-size:11px;" title="Rename Device">✏️</button><br>
                     HEADING: <span style="color: var(--accent); font-weight: 700;" id="headingDisplayHome">0° N</span>
                 </div>
             </div>
@@ -488,12 +491,34 @@
 
         <!-- 5. PROFILE TAB -->
         <div class="m-pane" id="mPaneProfile">
-            <h3 style="font-size: 14px; font-weight: 700;">CONNECTED GLASS TELEMETRY</h3>
+            <h3 style="font-size: 14px; font-weight: 700;">DEVICE SETTINGS & CONNECTIONS</h3>
+            
             <div class="m-card">
-                <div style="font-weight: 700;">RAY-BAN META SMART GLASSES</div>
+                <div style="font-weight: 700; color: var(--accent); font-size: 12px;">DEVICE NAME & IDENTIFIER</div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 10px; font-family: var(--font-mono); color: var(--text-muted);">SET CUSTOM DEVICE ID / CALLSIGN</label>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="inputDeviceName" style="flex: 1; background: var(--bg-primary); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px;" placeholder="e.g. My Phone / Glass 01">
+                        <button class="btn-action btn-accent" onclick="saveCustomDeviceName()">SAVE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="m-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 12px; color: var(--accent);">SERVER CONNECTION CONTROL</div>
+                        <div style="font-size: 10px; color: var(--text-muted); font-family: var(--font-mono);" id="profWsStatusDetail">Status: CONNECTED</div>
+                    </div>
+                    <button id="btnConnToggleProfile" class="btn-action btn-accent" onclick="toggleConnection()">DISCONNECT</button>
+                </div>
+            </div>
+
+            <div class="m-card">
+                <div style="font-weight: 700;">RAY-BAN META / MOBILE TELEMETRY</div>
                 <div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted); display: flex; flex-direction: column; gap: 4px;">
-                    <div>DEVICE ID: <span id="profDeviceId">PHONE_01</span></div>
-                    <div>WEBSOCKET: <span id="profWsStatus" style="color: var(--success);">CONNECTED</span></div>
+                    <div>ACTIVE DEVICE ID: <span id="profDeviceId" style="color: var(--accent); font-weight: 700;">PHONE_01</span></div>
+                    <div>WEBSOCKET STATE: <span id="profWsStatus" style="color: var(--success); font-weight: 700;">CONNECTED</span></div>
                     <div>YOLO STREAM: ACTIVE (5 FPS)</div>
                     <div>GPS MODE: HIGH-ACCURACY RTK (±1.2m)</div>
                     <div>CAMERA: REAR ENVIRONMENT FACING</div>
@@ -551,13 +576,44 @@
 
     <!-- CORE SCRIPT ENGINE -->
     <script>
-        const glassId = "phone_" + Math.floor(100 + Math.random() * 900);
-        document.getElementById('mDeviceIdText').innerText = glassId;
-        document.getElementById('profDeviceId').innerText = glassId;
-
+        let glassId = localStorage.getItem('reycon_device_id') || ("phone_" + Math.floor(100 + Math.random() * 900));
+        let manuallyDisconnected = false;
         let currentFacingMode = "environment";
         let liveDetections = [];
         let activeThreats = [];
+        let serverRadarBlips = [];
+
+        function updateDeviceNameDisplays() {
+            const displayId = glassId.toUpperCase();
+            const el1 = document.getElementById('mDeviceIdText');
+            if (el1) el1.innerText = displayId;
+            const el2 = document.getElementById('profDeviceId');
+            if (el2) el2.innerText = displayId;
+            const titleEl = document.getElementById('mOperatorTitle');
+            if (titleEl) titleEl.innerText = displayId;
+            const inp = document.getElementById('inputDeviceName');
+            if (inp) inp.value = glassId;
+        }
+        updateDeviceNameDisplays();
+
+        function saveCustomDeviceName() {
+            const input = document.getElementById('inputDeviceName');
+            if (input && input.value.trim()) {
+                glassId = input.value.trim().replaceAll(" ", "_");
+                localStorage.setItem('reycon_device_id', glassId);
+                updateDeviceNameDisplays();
+                alert(`✅ Device Name set to '${glassId}'`);
+            }
+        }
+
+        function editDeviceNameInline() {
+            const name = prompt("Enter custom device name / operator callsign:", glassId);
+            if (name && name.trim()) {
+                glassId = name.trim().replaceAll(" ", "_");
+                localStorage.setItem('reycon_device_id', glassId);
+                updateDeviceNameDisplays();
+            }
+        }
 
         // WEBCAM VIDEO STREAM INITIALIZATION (REAR CAMERA)
         async function initCamera() {
@@ -634,30 +690,59 @@
         const captureCanvas = document.createElement('canvas');
         const captureCtx = captureCanvas.getContext('2d');
 
+        function toggleConnection() {
+            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+                manuallyDisconnected = true;
+                ws.close();
+                updateConnUI(false, "DISCONNECTED");
+            } else {
+                manuallyDisconnected = false;
+                connectWebSocket();
+            }
+        }
+
+        function updateConnUI(isConnected, statusText) {
+            const badge = document.getElementById('mConnStatusBadge');
+            const text = document.getElementById('mConnStatusText');
+            const btnH = document.getElementById('btnConnToggleHeader');
+            const btnP = document.getElementById('btnConnToggleProfile');
+            const profStat = document.getElementById('profWsStatus');
+            const profDetail = document.getElementById('profWsStatusDetail');
+
+            if (isConnected) {
+                if (badge) badge.classList.remove('disconnected');
+                if (text) text.innerText = statusText || "ONLINE";
+                if (btnH) btnH.innerText = "DISCONNECT";
+                if (btnP) btnP.innerText = "DISCONNECT";
+                if (profStat) { profStat.innerText = "CONNECTED"; profStat.style.color = "var(--success)"; }
+                if (profDetail) profDetail.innerText = "State: ONLINE / CONNECTED";
+            } else {
+                if (badge) badge.classList.add('disconnected');
+                if (text) text.innerText = statusText || "OFFLINE";
+                if (btnH) btnH.innerText = "CONNECT";
+                if (btnP) btnP.innerText = "CONNECT";
+                if (profStat) { profStat.innerText = "DISCONNECTED"; profStat.style.color = "var(--danger)"; }
+                if (profDetail) profDetail.innerText = "State: DISCONNECTED (MANUAL)";
+            }
+        }
+
         function connectWebSocket() {
             const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${location.host}/ws/mobile`;
-            const badge = document.getElementById('mConnStatusBadge');
-            const text = document.getElementById('mConnStatusText');
 
             try {
                 ws = new WebSocket(wsUrl);
                 ws.onopen = () => {
-                    badge.classList.remove('disconnected');
-                    text.innerText = "ONLINE";
-                    document.getElementById('profWsStatus').innerText = "CONNECTED (" + wsUrl + ")";
-                    document.getElementById('profWsStatus').style.color = "var(--success)";
+                    updateConnUI(true, "ONLINE");
                 };
                 ws.onclose = () => {
-                    badge.classList.add('disconnected');
-                    text.innerText = "RECONNECTING...";
-                    document.getElementById('profWsStatus').innerText = "DISCONNECTED";
-                    document.getElementById('profWsStatus').style.color = "var(--danger)";
-                    setTimeout(connectWebSocket, 3000);
+                    updateConnUI(false, manuallyDisconnected ? "DISCONNECTED" : "RECONNECTING...");
+                    if (!manuallyDisconnected) {
+                        setTimeout(connectWebSocket, 3000);
+                    }
                 };
                 ws.onerror = () => {
-                    badge.classList.add('disconnected');
-                    text.innerText = "OFFLINE";
+                    updateConnUI(false, "OFFLINE");
                 };
                 ws.onmessage = (evt) => {
                     try {
@@ -670,11 +755,13 @@
                             activeThreats = data.active_threats;
                             renderThreatsUI();
                         }
+                        if (data.radar_blips) {
+                            serverRadarBlips = data.radar_blips;
+                        }
                     } catch (e) {}
                 };
             } catch (e) {
-                badge.classList.add('disconnected');
-                text.innerText = "OFFLINE";
+                updateConnUI(false, "OFFLINE");
             }
         }
         connectWebSocket();
@@ -836,15 +923,26 @@
                 ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
             }
 
+            // Center Blip (THIS DEVICE)
             ctx.fillStyle = '#18C37E';
             ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#FFF'; ctx.font = '9px JetBrains Mono'; ctx.fillText('MARK (YOU)', cx + 10, cy + 3);
+            ctx.fillStyle = '#FFF'; ctx.font = '9px JetBrains Mono'; ctx.fillText(`YOU (${glassId.toUpperCase()})`, cx + 10, cy + 3);
 
-            const px = cx;
-            const py = cy - 40;
-            ctx.fillStyle = '#2DD4FF';
-            ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#2DD4FF'; ctx.font = '9px JetBrains Mono'; ctx.fillText('PERSON', px + 8, py + 3);
+            // Draw Dynamic YOLO Detections or Server Radar Blips
+            const activeBlips = (serverRadarBlips && serverRadarBlips.length > 0) ? serverRadarBlips : liveDetections;
+            if (activeBlips && activeBlips.length > 0) {
+                activeBlips.forEach((b, idx) => {
+                    const label = (b.class_name || b.label || b.object_type || "OBJECT").toUpperCase();
+                    const dist = b.distance ? b.distance : 2.0;
+                    const angleOffset = (idx - (activeBlips.length - 1) / 2) * 0.4;
+                    const bx = cx + Math.sin(angleOffset) * (dist * 20);
+                    const by = cy - Math.cos(angleOffset) * (dist * 20);
+
+                    ctx.fillStyle = '#2DD4FF';
+                    ctx.beginPath(); ctx.arc(bx, by, 5, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#2DD4FF'; ctx.font = '9px JetBrains Mono'; ctx.fillText(`${label} (${dist.toFixed(1)}m)`, bx + 8, by + 3);
+                });
+            }
         }
 
         function renderRadars() {

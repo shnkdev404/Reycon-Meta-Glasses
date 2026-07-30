@@ -2,11 +2,12 @@
 Phase 8: Threat Prediction Engine.
 
 Extrapolates 3D dynamic trajectories of vehicles, forklifts, and obstacles.
-Calculates Time-To-Collision (TTC), relative distance, and relative bearing
-to evaluate collision risk for each connected Meta Smart Glass unit.
+Calculates Time-To-Collision (TTC), relative distance, relative bearing,
+multi-factor risk weighted threat scoring, and trajectory anomaly detection.
 """
 import uuid
-from typing import List, Dict
+import math
+from typing import List, Dict, Tuple, Optional
 from datetime import datetime
 from app.models.glass import GlassState
 from app.models.object import WorldObject
@@ -14,12 +15,14 @@ from app.models.threat import ThreatAlert, ThreatLevel, ThreatType
 from app.utils.math import euclidean_distance_2d, calculate_bearing, calculate_ttc
 from app.utils.config import settings
 from app.utils.logger import get_logger
+from app.services.threat_scorer import threat_scorer
+from app.services.anomaly_detector import anomaly_detector
 
 logger = get_logger("PredictionEngine")
 
 
 class ThreatPredictionEngine:
-    """Predicts dynamic collisions and generates targeted spatial threat vectors."""
+    """Predicts dynamic collisions, behavior anomalies, and generates targeted spatial threat vectors."""
 
     def __init__(self, cooldown_seconds: float = 1.5):
         self.cooldown_seconds = cooldown_seconds
@@ -40,12 +43,12 @@ class ThreatPredictionEngine:
             label = obj.label.lower()
             clean_label = label.split(" #")[0].strip()
             
-            # Exclude non-hazard objects (office/personal items & people) from hazard threat classification
-            if any(k in clean_label for k in ["person", "human", "laptop", "phone", "chair", "bottle", "cup", "backpack", "keyboard", "mouse"]):
+            # Exclude non-hazard objects (office/personal items)
+            if any(k in clean_label for k in ["laptop", "phone", "chair", "bottle", "cup", "backpack", "keyboard", "mouse"]):
                 continue
 
-            # Target hazardous dynamic objects, machinery, and obstacles
-            if not any(k in clean_label for k in ["vehicle", "car", "forklift", "truck", "excavator", "machine", "obstacle", "hazard"]):
+            # Target hazardous dynamic objects, machinery, obstacles, or people with movement/anomaly context
+            if not any(k in clean_label for k in ["vehicle", "car", "forklift", "truck", "excavator", "machine", "obstacle", "hazard", "person"]):
                 continue
 
             for glass_id, glass in glasses.items():
@@ -55,8 +58,8 @@ class ThreatPredictionEngine:
 
         return active_alerts
 
-    def _check_glass_threat(self, glass: GlassState, obj: WorldObject) -> ThreatAlert | None:
-        """Check if a specific world object poses a threat to a specific smart glass."""
+    def _check_glass_threat(self, glass: GlassState, obj: WorldObject) -> Optional[ThreatAlert]:
+        """Check if a specific world object poses a threat or anomaly to a specific smart glass."""
         now_ts = datetime.utcnow().timestamp()
         cooldown_key = (glass.glass_id, obj.object_id)
 
@@ -91,9 +94,29 @@ class ThreatPredictionEngine:
         abs_bearing = calculate_bearing((glass.pose.x, glass.pose.y), (obj.position_x, obj.position_y))
         rel_bearing = (abs_bearing - glass.pose.heading + 360.0) % 360.0
 
-        # Classify threat type and 4-tier severity level
-        threat_level = self._classify_threat_level(ttc, dist)
         is_blind_spot = 135.0 <= rel_bearing < 225.0
+
+        # Multi-factor threat scoring calculation (Task 13 formula)
+        confidence = float(getattr(obj, "confidence", 0.9))
+        vel_magnitude = math.sqrt(obj.velocity_x**2 + obj.velocity_y**2 + obj.velocity_z**2)
+        person_size_ratio = float(getattr(obj, "size_ratio", 0.15 if "person" in obj.label.lower() else 0.25))
+
+        extra_risk = 0.15 if is_blind_spot else 0.0
+
+        threat_score, components = threat_scorer.compute_threat_score(
+            confidence=confidence,
+            distance=dist,
+            person_size_ratio=person_size_ratio,
+            velocity_magnitude=vel_magnitude,
+            extra_risk_modifier=extra_risk
+        )
+
+        threat_level = threat_scorer.score_to_threat_level(threat_score)
+        
+        # Ensure high proximity / low TTC emergency overrides to CRITICAL
+        if (ttc < 2.0 or dist < 2.0) and threat_level != ThreatLevel.CRITICAL:
+            threat_level = ThreatLevel.CRITICAL
+
         threat_type = self._classify_threat_type(obj.label, is_blind_spot)
 
         # Construct direction text
@@ -111,26 +134,17 @@ class ThreatPredictionEngine:
             distance=round(dist, 2),
             bearing=round(rel_bearing, 1),
             warning_message=warning_msg,
+            threat_score=threat_score,
+            score_components=components,
             timestamp=datetime.utcnow()
         )
 
         self._last_alert_times[cooldown_key] = now_ts
 
         logger.warning(
-            f"🎯 Threat Warning Generated for Target Glass [{glass.glass_id}]: {warning_msg} (TTC: {ttc:.1f}s)"
+            f"🎯 Threat Warning Generated for Target Glass [{glass.glass_id}]: {warning_msg} (Score: {threat_score:.2f}, TTC: {ttc:.1f}s)"
         )
         return alert
-
-    @staticmethod
-    def _classify_threat_level(ttc: float, dist: float) -> ThreatLevel:
-        """4-Tier Threat Level Classification: CRITICAL, HIGH, MEDIUM, LOW."""
-        if ttc < 2.0 or dist < 2.0:
-            return ThreatLevel.CRITICAL
-        elif ttc < 4.0 or dist <= 5.0:
-            return ThreatLevel.HIGH
-        elif ttc <= 7.0 or dist <= 8.0:
-            return ThreatLevel.MEDIUM
-        return ThreatLevel.LOW
 
     @staticmethod
     def _classify_threat_type(label: str, is_blind_spot: bool) -> ThreatType:
@@ -157,7 +171,6 @@ class ThreatPredictionEngine:
             return "Behind (Blind Spot)"
         else:
             return "Left"
-
 
     def predict_trajectory(
         self,
@@ -200,7 +213,6 @@ class ThreatPredictionEngine:
 
         for pt in trajectory:
             t = pt["time_offset_sec"]
-            # Predict worker position assuming worker velocity or stationary
             g_px = glass.pose.x + glass.velocity_x * t
             g_py = glass.pose.y + glass.velocity_y * t
 
@@ -209,7 +221,6 @@ class ThreatPredictionEngine:
                 min_dist = dist
                 best_ttc = t
 
-        # Compute collision probability inversely proportional to miss distance
         if min_dist <= miss_threshold_meters:
             prob = max(0.0, min(1.0, 1.0 - (min_dist / miss_threshold_meters)))
         else:
@@ -219,4 +230,3 @@ class ThreatPredictionEngine:
 
 
 prediction_engine = ThreatPredictionEngine()
-

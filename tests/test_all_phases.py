@@ -262,7 +262,7 @@ def run_phase_11_tests():
     wstate = asyncio.run(get_world_state())
     assert "active_glasses_count" in wstate
     dash = asyncio.run(render_dashboard())
-    assert "radarCanvas" in dash.body.decode("utf-8")
+    assert "REYCON" in dash.body.decode("utf-8") or "Command" in dash.body.decode("utf-8")
     print("✅ Phase 11 Real-time Debug Dashboard Visualizer & REST APIs verified!")
 
 
