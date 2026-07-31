@@ -6,7 +6,7 @@ Uses Ultralytics YOLO Pose (yolo11n-pose.pt) to extract 17 COCO human body keypo
 (standing, running, prone/crawling, aggressive_arms_raised).
 """
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import cv2
 import numpy as np
 from app.services.detector import model_manager

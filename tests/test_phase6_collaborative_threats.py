@@ -7,7 +7,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.glass import GlassPose, GlassState
 from app.models.object import WorldObject
 from app.models.threat import ThreatAlert, ThreatLevel, ThreatType
@@ -55,7 +55,7 @@ async def _async_phase6_test():
         velocity_y=0.0,
         velocity_z=0.0,
         source_glasses=["glass_A"],
-        last_seen=datetime.utcnow()
+        last_seen=datetime.now(timezone.utc)
     )
 
     # Evaluate threats centrally on server
@@ -89,7 +89,7 @@ async def _async_phase6_test():
         velocity_y=0.0,
         velocity_z=0.0,
         source_glasses=["glass_B"],
-        last_seen=datetime.utcnow()
+        last_seen=datetime.now(timezone.utc)
     )
 
     world_objects_s2 = {"obj_excavator_B": excavator_observed_by_B}

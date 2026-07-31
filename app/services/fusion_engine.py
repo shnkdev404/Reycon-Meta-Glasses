@@ -6,7 +6,7 @@ Avoids duplicates, clusters spatial observations, boosts confidence for multi-ob
 and computes estimated 3D velocity vectors.
 """
 from typing import List, Dict
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.object import WorldObject
 from app.utils.math import euclidean_distance_3d
 from app.utils.config import settings
@@ -85,7 +85,7 @@ class PerceptionFusionEngine:
                     velocity_z=round(vel_z, 2),
                     source_glasses=combined_glasses,
                     detection_count=num_glasses,
-                    last_seen=datetime.utcnow()
+                    last_seen=datetime.now(timezone.utc)
                 )
                 logger.info(f"🔗 Fused multi-glass detection from '{new_obj.source_glasses}' into Global Object [{matched_id}] (Observers: {num_glasses}, Conf: {boosted_conf:.2f})")
             else:

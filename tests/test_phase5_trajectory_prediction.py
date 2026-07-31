@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.glass import GlassPose, GlassState
 from app.models.object import WorldObject
 from app.services.prediction_engine import ThreatPredictionEngine
@@ -30,7 +30,7 @@ def test_phase_5_trajectory_prediction():
         velocity_x=-2.5,  # Moving left toward origin at 2.5 m/s
         velocity_y=0.0,
         velocity_z=0.0,
-        last_seen=datetime.utcnow()
+        last_seen=datetime.now(timezone.utc)
     )
 
     # Stationary target worker at origin (0, 0)

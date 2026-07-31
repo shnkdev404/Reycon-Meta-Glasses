@@ -8,7 +8,7 @@ from typing import Optional, Any
 
 
 from typing import Optional, Any, Dict
-from datetime import datetime
+from datetime import datetime, timezone
 from app.sensors.camera_sensor import BaseCameraSensor
 
 
@@ -40,7 +40,7 @@ class MetaCameraAdapter(BaseCameraSensor):
         
         return {
             "glass_id": self.glass_id,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(timezone.utc).timestamp(),
             "width": self.resolution[0],
             "height": self.resolution[1],
             "fps": self.fps,

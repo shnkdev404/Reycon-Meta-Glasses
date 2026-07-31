@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from app.meta.camera_adapter import MetaCameraAdapter
 from app.meta.imu_adapter import MetaIMUAdapter
 from app.meta.pose_adapter import MetaPoseAdapter
@@ -65,7 +65,7 @@ async def _run_alert_adapter_test():
         distance=2.5,
         bearing=270.0, # Left side (270° = -90° azimuth)
         warning_message="CRITICAL: Forklift detected at Left (2.5m away!)",
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
     
     success = await alert_adapter.send_alert(alert)

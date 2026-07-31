@@ -5,7 +5,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.glass import GlassState, GlassPose
 from app.models.object import WorldObject
 from app.models.threat import ThreatLevel, ThreatType
@@ -29,7 +29,7 @@ def test_critical_head_on_threat():
         confidence=0.95,
         position_x=0.0, position_y=3.0, position_z=0.0,
         velocity_x=0.0, velocity_y=-3.0, velocity_z=0.0,
-        last_seen=datetime.utcnow()
+        last_seen=datetime.now(timezone.utc)
     )
     
     threats = engine.evaluate_threats({"glass_user": glass}, {"obj_forklift_1": forklift})
@@ -60,7 +60,7 @@ def test_blind_spot_rear_threat():
         confidence=0.90,
         position_x=0.0, position_y=-4.0, position_z=0.0,
         velocity_x=0.0, velocity_y=1.0, velocity_z=0.0,
-        last_seen=datetime.utcnow()
+        last_seen=datetime.now(timezone.utc)
     )
     
     threats = engine.evaluate_threats({"worker_1": glass}, {"obj_hazard_1": hazard})
@@ -77,7 +77,7 @@ def test_alert_cooldown_suppression():
     engine = ThreatPredictionEngine(cooldown_seconds=2.0)
     
     glass = GlassState(glass_id="g1", pose=GlassPose(x=0.0, y=0.0, heading=0.0))
-    car = WorldObject(object_id="car_1", label="car", confidence=0.9, position_x=0.0, position_y=4.0, last_seen=datetime.utcnow())
+    car = WorldObject(object_id="car_1", label="car", confidence=0.9, position_x=0.0, position_y=4.0, last_seen=datetime.now(timezone.utc))
     
     # 1st evaluation -> Should generate alert
     alerts1 = engine.evaluate_threats({"g1": glass}, {"car_1": car})

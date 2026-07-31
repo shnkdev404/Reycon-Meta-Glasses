@@ -284,11 +284,11 @@ class SharedWorldManager:
         clean_type = object_type.lower().split(" #")[0].strip()
 
         with self.lock:
-            # Check if matching threat exists nearby from same glass
+            # Check if matching threat exists nearby (from ANY glass)
             existing_match_id = None
             for tid, existing in self.threats.items():
-                if existing.detected_by_glass_id == detected_by_glass_id and existing.object_type == object_type:
-                    if existing.position.distance_to(position) <= 2.0:
+                if existing.object_type == object_type:
+                    if existing.position.distance_to(position) <= 3.0:
                         existing_match_id = tid
                         break
             

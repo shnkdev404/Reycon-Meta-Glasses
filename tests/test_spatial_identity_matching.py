@@ -9,7 +9,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.glass import GlassPose, GlassState
 from app.models.object import WorldObject
 from app.services.fusion_engine import fusion_engine
@@ -73,7 +73,7 @@ def test_spatial_identity_matching():
         position_z=0.0,
         velocity_x=0.0,
         velocity_y=2.5,
-        last_seen=datetime.utcnow()
+        last_seen=datetime.now(timezone.utc)
     )
 
     world_objects = {"obj_truck_danger": moving_truck}

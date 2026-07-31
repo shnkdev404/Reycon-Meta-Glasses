@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.vision.detector import YOLOWrapper
 from app.vision.tracker import TrackManager
 from app.vision.depth import DepthEstimatorWrapper
@@ -70,7 +70,7 @@ def test_tracking_manager_velocity():
     print("\n--- 4. Testing TrackingManager 3D Velocity Engine ---")
     tm = TrackingManager()
     
-    t0 = datetime.utcnow()
+    t0 = datetime.now(timezone.utc)
     t1 = t0 + timedelta(seconds=1.0)
     
     obj_t0 = {

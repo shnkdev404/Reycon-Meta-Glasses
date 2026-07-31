@@ -1,0 +1,17 @@
+{
+  "example_id": "hex_484a7aea",
+  "class_name": "person",
+  "confidence": 0.42,
+  "bbox": [
+    100,
+    100,
+    250,
+    250
+  ],
+  "frame_width": 640,
+  "frame_height": 384,
+  "crop_path": "data/hard_examples_test\\images\\hex_484a7aea_crop.jpg",
+  "full_path": "data/hard_examples_test\\images\\hex_484a7aea_full.jpg",
+  "reason": "uncertain_prediction",
+  "timestamp": 1785470283.5022464
+}

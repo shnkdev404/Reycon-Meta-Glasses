@@ -2,7 +2,7 @@
 Pydantic data models for 2D visual detections and 3D fused World Objects.
 """
 from typing import Optional, List, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -38,4 +38,4 @@ class WorldObject(BaseModel):
     velocity_z: float = Field(default=0.0, description="Estimated Z velocity (m/s)")
     source_glasses: List[str] = Field(default_factory=list, description="Glass IDs observing this object")
     detection_count: int = Field(default=1, description="Number of glasses confirming detection")
-    last_seen: datetime = Field(default_factory=datetime.utcnow)
+    last_seen: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

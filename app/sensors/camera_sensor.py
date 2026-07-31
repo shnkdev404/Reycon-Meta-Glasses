@@ -19,7 +19,7 @@ class BaseCameraSensor(ABC):
 
     @abstractmethod
     def read_frame(self) -> Optional[Any]:
-        """Fetch the latest raw camera frame buffer."""
+        """Read latest camera frame buffer."""
         pass
 
     @abstractmethod
@@ -29,13 +29,12 @@ class BaseCameraSensor(ABC):
 
 
 class SimulatedCameraSensor(BaseCameraSensor):
-    """Synthetic camera sensor producing simulated frames for hackathon testing."""
+    """Simulated camera sensor generating dummy RGB frame packets."""
 
-    def __init__(self, glass_id: str, resolution: tuple = (1920, 1080), fps: int = 30):
+    def __init__(self, glass_id: str = "default_glass", resolution: tuple = (1920, 1080)):
         self.glass_id = glass_id
         self.resolution = resolution
-        self.fps = fps
-        self._is_active = False
+        self._is_active = True
 
     def start(self) -> bool:
         self._is_active = True
@@ -46,7 +45,7 @@ class SimulatedCameraSensor(BaseCameraSensor):
             return None
         return {
             "glass_id": self.glass_id,
-            "timestamp": datetime.utcnow().timestamp(),
+            "timestamp": datetime.now(timezone.utc).timestamp(),
             "width": self.resolution[0],
             "height": self.resolution[1],
             "format": "RGB888",

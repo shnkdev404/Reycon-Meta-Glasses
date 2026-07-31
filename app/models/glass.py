@@ -3,7 +3,7 @@ Pydantic data models representing Meta Smart Glass pose, sensors, health, and st
 """
 import time
 from typing import Optional, List, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 
 
@@ -52,7 +52,7 @@ class GlassState(BaseModel):
     velocity_x: float = 0.0
     velocity_y: float = 0.0
     velocity_z: float = 0.0
-    last_update: datetime = Field(default_factory=datetime.utcnow)
+    last_update: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     timestamp: float = Field(default_factory=time.time)
 
     @property

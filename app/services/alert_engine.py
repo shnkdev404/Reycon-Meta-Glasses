@@ -16,7 +16,7 @@ logger = get_logger("AlertEngine")
 
 import time
 from typing import List, Dict, Set
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.threat import ThreatAlert
 from app.services.connection_manager import connection_manager
 from app.meta.alert_adapter import MetaAlertAdapter
@@ -76,7 +76,7 @@ class AlertDecisionEngine:
                 "threat_type": alert.threat_type.value,
                 "warning_message": alert.warning_message,
                 "websocket_delivered": ws_success,
-                "dispatched_at": datetime.utcnow().isoformat()
+                "dispatched_at": datetime.now(timezone.utc).isoformat()
             })
 
             # Bound history size

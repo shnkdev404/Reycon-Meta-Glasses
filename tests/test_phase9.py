@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.threat import ThreatAlert, ThreatLevel, ThreatType
 from app.services.alert_engine import alert_engine
 
@@ -30,7 +30,7 @@ async def _run_dispatch_test():
         distance=3.5,
         bearing=180.0, # Behind user
         warning_message="CRITICAL: Forklift detected at Behind (Blind Spot) (3.5m away!)",
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
     
     count = await alert_engine.dispatch_alerts([alert])
@@ -61,7 +61,7 @@ async def _run_throttling_test():
         distance=5.0,
         bearing=0.0,
         warning_message="HIGH: Vehicle detected at Front (5.0m away!)",
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
     
     count1 = await alert_engine.dispatch_alerts([alert])

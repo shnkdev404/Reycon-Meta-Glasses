@@ -3,7 +3,7 @@ Depth Sensor & Metric Depth Estimator Module.
 Provides RGB-D sensor camera depth alignment and pinhole fallback geometric distance model.
 """
 import logging
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any, Dict
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -55,8 +55,8 @@ class DepthEstimator:
         if len(valid_depth) == 0:
             return None
         
-        # Return median depth
-        return float(np.median(valid_depth))
+        # Return median depth rounded to 2 decimal places
+        return round(float(np.median(valid_depth)), 2)
     
     def fallback_distance(self, bbox: Tuple[float, float, float, float], frame_height: int) -> float:
         """Fallback pinhole model if depth unavailable."""
@@ -98,8 +98,9 @@ def estimate_distance_with_depth(bbox: Tuple[float, float, float, float], depth_
 class DepthSensor(BaseDepthSensor):
     """Hardware Depth Sensor Interface."""
 
-    def __init__(self, device_id: int = 0):
-        self.device_id = device_id
+    def __init__(self, device_id: Any = 0, glass_id: Optional[str] = None):
+        self.device_id = glass_id or device_id
+        self.glass_id = glass_id or str(device_id)
         self.depth_estimator = DepthEstimator()
 
     def get_depth_frame(self, width: int = 640, height: int = 384) -> np.ndarray:
@@ -107,5 +108,10 @@ class DepthSensor(BaseDepthSensor):
         depth_map = np.ones((height, width), dtype=np.float32) * 5.0
         return depth_map
 
+    def get_depth_map(self, width: int = 640, height: int = 384) -> np.ndarray:
+        """Alias method matching test contract."""
+        return self.get_depth_frame(width=width, height=height)
+
     def read_depth_map(self) -> Optional[np.ndarray]:
         return self.get_depth_frame()
+

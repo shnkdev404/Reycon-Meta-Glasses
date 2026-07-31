@@ -8,7 +8,7 @@ multi-factor risk weighted threat scoring, and trajectory anomaly detection.
 import uuid
 import math
 from typing import List, Dict, Tuple, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.glass import GlassState
 from app.models.object import WorldObject
 from app.models.threat import ThreatAlert, ThreatLevel, ThreatType
@@ -60,7 +60,7 @@ class ThreatPredictionEngine:
 
     def _check_glass_threat(self, glass: GlassState, obj: WorldObject) -> Optional[ThreatAlert]:
         """Check if a specific world object poses a threat or anomaly to a specific smart glass."""
-        now_ts = datetime.utcnow().timestamp()
+        now_ts = datetime.now(timezone.utc).timestamp()
         cooldown_key = (glass.glass_id, obj.object_id)
 
         # Check cooldown suppression to avoid alert spam
@@ -136,7 +136,7 @@ class ThreatPredictionEngine:
             warning_message=warning_msg,
             threat_score=threat_score,
             score_components=components,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
 
         self._last_alert_times[cooldown_key] = now_ts

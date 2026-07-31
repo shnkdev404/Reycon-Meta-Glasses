@@ -13,7 +13,7 @@ from app.services.geometry import polar_to_cartesian_relative, camera_to_world_2
 
 import uuid
 from typing import List, Dict, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models.object import Detection2D, WorldObject
 from app.models.glass import GlassState, GlassPose
 from app.services.geometry import (
@@ -67,7 +67,7 @@ class CoordinateTransformer:
             velocity_z=0.0,
             source_glasses=[glass_state.glass_id],
             detection_count=1,
-            last_seen=datetime.utcnow()
+            last_seen=datetime.now(timezone.utc)
         )
 
     def transform_world_to_glass_relative(

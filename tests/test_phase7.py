@@ -5,7 +5,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models.object import WorldObject
 from app.services.fusion_engine import fusion_engine
 
@@ -30,7 +30,7 @@ def test_single_glass_object_insertion():
 
 def test_multi_glass_fusion_and_confidence_boost():
     print("\n--- 2. Testing Multi-Glass Spatial Clustering & Confidence Boosting ---")
-    t0 = datetime.utcnow()
+    t0 = datetime.now(timezone.utc)
     t1 = t0 + timedelta(seconds=0.5)
     
     # Glass A detection
@@ -79,7 +79,7 @@ def test_multi_glass_fusion_and_confidence_boost():
 
 def test_velocity_estimation_during_fusion():
     print("\n--- 3. Testing 3D Velocity Estimation During Fusion ---")
-    t0 = datetime.utcnow()
+    t0 = datetime.now(timezone.utc)
     t1 = t0 + timedelta(seconds=1.0)
     
     obj_t0 = WorldObject(

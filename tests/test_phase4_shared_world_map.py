@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models.object import WorldObject
 from app.models.glass import GlassPose, GlassState
 from app.models.map import LocalMap, KeyFrame, MapPoint
@@ -20,7 +20,7 @@ def test_phase_4_shared_world_map():
     print("==========================================================================")
 
     # Step 1: Simulate Multi-Glass Observations of the Same Object
-    t0 = datetime.utcnow()
+    t0 = datetime.now(timezone.utc)
     t1 = t0 + timedelta(seconds=0.5)
 
     # Glass A sees an excavator at (15.0, 20.0, 0.0)

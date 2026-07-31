@@ -6,7 +6,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Phase 1
 from app.services.connection_manager import connection_manager
@@ -103,7 +103,7 @@ def run_phase_3_tests():
     assert 6.0 <= dest.estimate_depth(None, bbox, "person") <= 7.5
     
     tm = TrackingManager()
-    t0 = datetime.utcnow()
+    t0 = datetime.now(timezone.utc)
     t1 = t0 + timedelta(seconds=1.0)
     o0 = {"v1": WorldObject(object_id="v1", label="car", confidence=0.9, position_x=0.0, position_y=0.0, last_seen=t0)}
     o1 = {"v1": WorldObject(object_id="v1", label="car", confidence=0.9, position_x=3.0, position_y=4.0, last_seen=t1)}
@@ -177,7 +177,7 @@ def run_phase_7_tests():
     print("\n==================================================")
     print("🔗 TESTING PHASE 7: Perception Fusion Engine")
     print("==================================================")
-    t0 = datetime.utcnow()
+    t0 = datetime.now(timezone.utc)
     t1 = t0 + timedelta(seconds=0.5)
     obj_a = WorldObject(object_id="car_1", label="vehicle #1", confidence=0.85, position_x=5.0, position_y=10.0, source_glasses=["glass_A"], last_seen=t0)
     obj_b = WorldObject(object_id="car_2", label="vehicle #2", confidence=0.90, position_x=5.2, position_y=10.2, source_glasses=["glass_B"], last_seen=t1)
@@ -195,7 +195,7 @@ def run_phase_8_tests():
     print("==================================================")
     pengine = ThreatPredictionEngine(cooldown_seconds=0.0)
     glass = GlassState(glass_id="worker_rear", pose=GlassPose(x=0.0, y=0.0, heading=0.0))
-    hazard = WorldObject(object_id="obj_rear", label="obstacle", confidence=0.9, position_x=0.0, position_y=-3.0, last_seen=datetime.utcnow())
+    hazard = WorldObject(object_id="obj_rear", label="obstacle", confidence=0.9, position_x=0.0, position_y=-3.0, last_seen=datetime.now(timezone.utc))
     
     threats = pengine.evaluate_threats({"worker_rear": glass}, {"obj_rear": hazard})
     assert len(threats) == 1
@@ -217,7 +217,7 @@ async def _async_phase_9_test():
         alert_id="alt_phase9", target_glass_id="glass_target", trigger_object_id="obj_forklift_9",
         threat_type=ThreatType.FORKLIFT_APPROACH, threat_level=ThreatLevel.CRITICAL,
         time_to_collision=1.0, distance=2.5, bearing=180.0,
-        warning_message="CRITICAL: Forklift detected at Behind (Blind Spot) (2.5m away!)", timestamp=datetime.utcnow()
+        warning_message="CRITICAL: Forklift detected at Behind (Blind Spot) (2.5m away!)", timestamp=datetime.now(timezone.utc)
     )
     dispatched = await alert_engine.dispatch_alerts([alert])
     assert dispatched == 1
@@ -247,7 +247,7 @@ async def _async_phase_10_test():
     alert = ThreatAlert(
         alert_id="alt_m10", target_glass_id="meta_01", trigger_object_id="obj_car",
         threat_type=ThreatType.VEHICLE_APPROACH, threat_level=ThreatLevel.CRITICAL,
-        time_to_collision=1.5, distance=3.0, bearing=90.0, warning_message="CRITICAL: Car at Right", timestamp=datetime.utcnow()
+        time_to_collision=1.5, distance=3.0, bearing=90.0, warning_message="CRITICAL: Car at Right", timestamp=datetime.now(timezone.utc)
     )
     assert await alert_adapter.send_alert(alert) is True
     print("✅ Phase 10 Meta Wearable SDK Hardware Adapters (Camera, IMU, Pose, HUD/Haptics) verified!")

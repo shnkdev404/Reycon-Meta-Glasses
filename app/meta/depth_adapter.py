@@ -35,7 +35,7 @@ class MetaDepthAdapter(BaseDepthSensor):
         except Exception as e:
             logger.error(f"Failed to decode depth buffer for '{self.glass_id}': {e}")
 
-    def read_depth_map() -> Optional[np.ndarray]:
+    def read_depth_map(self) -> Optional[np.ndarray]:
         return self.get_depth_map()
 
     def get_distance_at_pixel(self, x: int, y: int) -> float:

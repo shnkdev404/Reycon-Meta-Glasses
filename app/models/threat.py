@@ -2,7 +2,7 @@
 Pydantic data models for Threat Assessment and Directed Alerts.
 """
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict
 from pydantic import BaseModel, Field
 
@@ -38,4 +38,4 @@ class ThreatAlert(BaseModel):
     warning_message: str = Field(..., description="Human-readable warning text")
     threat_score: float = Field(default=0.0, description="Multi-factor weighted threat score (0.0 to 1.0)")
     score_components: Dict[str, float] = Field(default_factory=dict, description="Multi-factor risk score component breakdown")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
